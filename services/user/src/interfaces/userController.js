@@ -1,8 +1,9 @@
-// Interface Layer: userController (ES Modules)
-import { UserService } from '../application/UserService.js';
-import { User } from '../domain/User.js';
+import { UserRepository } from '../infrastructure/UserRepository.js';
+import { publishEvent } from '../infrastructure/rabbitmq.js';
 
-const userService = new UserService();
+const userRepository = new UserRepository();
+const userService = new UserService(userRepository, publishEvent);
+import { User } from '../domain/User.js';
 
 export const validate = async (req, res) => {
   const { username, password } = req.body;
@@ -12,7 +13,6 @@ export const validate = async (req, res) => {
 
 export const register = async (req, res) => {
   const { username, password, role } = req.body;
-  // Cria novo usuário (id simples para exemplo)
   const user = new User(Date.now(), username, password, role || 'user');
   const saved = await userService.createUser(user);
   res.status(201).json(saved);

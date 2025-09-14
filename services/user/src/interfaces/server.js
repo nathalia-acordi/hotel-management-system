@@ -1,4 +1,3 @@
-// Express server setup (REST API) - ES Modules
 import express from 'express';
 import bodyParser from 'body-parser';
 import { validate, register } from './userController.js';
