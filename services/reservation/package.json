@@ -2,11 +2,15 @@
   "name": "reservation-service",
   "version": "1.0.0",
   "main": "src/index.js",
+  "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "test": "jest --coverage"
+  "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.cjs --coverage"
   },
-  "dependencies": {},
+  "dependencies": {
+    "express": "^5.1.0",
+    "amqplib": "^0.10.9"
+  },
   "devDependencies": {
     "jest": "^29.0.0"
   }
