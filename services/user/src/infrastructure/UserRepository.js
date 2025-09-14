@@ -10,6 +10,10 @@ export class UserRepository {
     if (UserRepository.instance) return UserRepository.instance;
     UserRepository.instance = this;
   }
+  async save(user) {
+    users.push(user);
+    return user;
+  }
   async findByUsername(username) {
     return users.find(u => u.username === username);
   }

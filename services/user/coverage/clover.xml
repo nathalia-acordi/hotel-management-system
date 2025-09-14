@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1757820304569" clover="3.2.0">
+  <project timestamp="1757820304569" name="All files">
+    <metrics statements="18" coveredstatements="18" conditionals="6" coveredconditionals="6" methods="8" coveredmethods="8" elements="32" coveredelements="32" complexity="0" loc="18" ncloc="18" packages="3" files="3" classes="3"/>
+    <package name="application">
+      <metrics statements="8" coveredstatements="8" conditionals="4" coveredconditionals="4" methods="3" coveredmethods="3"/>
+      <file name="UserService.js" path="C:\Users\natha\Desktop\ese-t1\services\user\src\application\UserService.js">
+        <metrics statements="8" coveredstatements="8" conditionals="4" coveredconditionals="4" methods="3" coveredmethods="3"/>
+        <line num="7" count="3" type="stmt"/>
+        <line num="10" count="2" type="stmt"/>
+        <line num="11" count="2" type="cond" truecount="4" falsecount="0"/>
+        <line num="12" count="1" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="18" count="3" type="stmt"/>
+        <line num="20" count="3" type="stmt"/>
+        <line num="21" count="3" type="stmt"/>
+      </file>
+    </package>
+    <package name="domain">
+      <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+      <file name="User.js" path="C:\Users\natha\Desktop\ese-t1\services\user\src\domain\User.js">
+        <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="4" count="3" type="stmt"/>
+        <line num="5" count="3" type="stmt"/>
+        <line num="6" count="3" type="stmt"/>
+        <line num="7" count="3" type="stmt"/>
+      </file>
+    </package>
+    <package name="infrastructure">
+      <metrics statements="6" coveredstatements="6" conditionals="2" coveredconditionals="2" methods="4" coveredmethods="4"/>
+      <file name="UserRepository.js" path="C:\Users\natha\Desktop\ese-t1\services\user\src\infrastructure\UserRepository.js">
+        <metrics statements="6" coveredstatements="6" conditionals="2" coveredconditionals="2" methods="4" coveredmethods="4"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="10" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="11" count="1" type="stmt"/>
+        <line num="14" count="3" type="stmt"/>
+        <line num="15" count="3" type="stmt"/>
+        <line num="18" count="5" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>
