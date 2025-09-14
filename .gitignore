@@ -14,4 +14,8 @@ yarn-error.log*
 # dotenv environment variables
 .env
 
+# Coverage reports
+coverage/
+**/coverage/
+
 
