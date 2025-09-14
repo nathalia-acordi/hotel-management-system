@@ -4,15 +4,16 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-  "start": "node src/interfaces/server.js",
-  "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.cjs --coverage"
+    "start": "node src/interfaces/server.js",
+  "test:integration": "set USER_URL=http://localhost:3000&& set AUTH_URL=http://localhost:3001&& jest tests/integrationAuthUser.test.js",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.cjs --coverage"
   },
   "dependencies": {
     "axios": "^1.12.1",
     "body-parser": "^2.2.0",
     "express": "^5.1.0",
-  "jsonwebtoken": "^9.0.2",
-  "amqplib": "^0.10.9"
+    "jsonwebtoken": "^9.0.2",
+    "amqplib": "^0.10.9"
   },
   "devDependencies": {
     "jest": "^29.0.0",

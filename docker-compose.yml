@@ -1,3 +1,5 @@
+version: '3.9'
+services:
   reservation:
     build: ./services/reservation
     container_name: reservation-service
@@ -8,8 +10,6 @@
       - RABBITMQ_URL=amqp://rabbitmq
     depends_on:
       - rabbitmq
-version: '3.9'
-services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -22,19 +22,19 @@ services:
 
   auth:
     build: ./services/auth
-    container_name: auth-service
+    container_name: auth
     ports:
       - "3001:3000"
     environment:
       - NODE_ENV=development
-      - USER_SERVICE_URL=http://user-service:3000
+      - USER_URL=http://user:3000
     depends_on:
       - user
       - rabbitmq
 
   user:
     build: ./services/user
-    container_name: user-service
+    container_name: user
     ports:
       - "3000:3000"
     environment:

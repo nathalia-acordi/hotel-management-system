@@ -15,8 +15,12 @@ export class UserService {
 
   async createUser(user) {
     const saved = await this.userRepository.save(user);
-    // Publica evento UserCreated no RabbitMQ
-    await this.eventPublisher('user.created', { id: saved.id, username: saved.username, role: saved.role });
+    // Publica evento UserCreated no RabbitMQ, mas não falha se der erro
+    try {
+      await this.eventPublisher('user.created', { id: saved.id, username: saved.username, role: saved.role });
+    } catch (err) {
+      console.error('Erro ao publicar evento no RabbitMQ:', err.message);
+    }
     return saved;
   }
 }

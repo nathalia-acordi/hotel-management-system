@@ -1,6 +1,7 @@
-FROM node:20-alpine
-WORKDIR /app
+FROM node:20.19.5-alpine
+WORKDIR /usr/src/app
 COPY package*.json ./
-RUN npm install
+RUN npm install --production
 COPY . .
-CMD ["npm", "run", "start"]
+EXPOSE 3000
+CMD ["node", "src/interfaces/server.js"]
