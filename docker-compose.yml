@@ -1,3 +1,13 @@
+  reservation:
+    build: ./services/reservation
+    container_name: reservation-service
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=development
+      - RABBITMQ_URL=amqp://rabbitmq
+    depends_on:
+      - rabbitmq
 version: '3.9'
 services:
   rabbitmq:
@@ -17,44 +27,16 @@ services:
       - "3001:3000"
     environment:
       - NODE_ENV=development
+      - USER_SERVICE_URL=http://user-service:3000
     depends_on:
+      - user
       - rabbitmq
 
   user:
     build: ./services/user
     container_name: user-service
     ports:
-      - "3002:3000"
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - rabbitmq
-
-  room:
-    build: ./services/room
-    container_name: room-service
-    ports:
-      - "3003:3000"
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - rabbitmq
-
-  reservation:
-    build: ./services/reservation
-    container_name: reservation-service
-    ports:
-      - "3004:3000"
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - rabbitmq
-
-  payment:
-    build: ./services/payment
-    container_name: payment-service
-    ports:
-      - "3005:3000"
+      - "3000:3000"
     environment:
       - NODE_ENV=development
     depends_on:
