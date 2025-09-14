@@ -1,0 +1,65 @@
+version: '3.9'
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  auth:
+    build: ./services/auth
+    container_name: auth-service
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - rabbitmq
+
+  user:
+    build: ./services/user
+    container_name: user-service
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - rabbitmq
+
+  room:
+    build: ./services/room
+    container_name: room-service
+    ports:
+      - "3003:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - rabbitmq
+
+  reservation:
+    build: ./services/reservation
+    container_name: reservation-service
+    ports:
+      - "3004:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - rabbitmq
+
+  payment:
+    build: ./services/payment
+    container_name: payment-service
+    ports:
+      - "3005:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - rabbitmq
+
+networks:
+  default:
+    driver: bridge
