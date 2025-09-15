@@ -3,6 +3,7 @@ import { ReservationRepository } from '../infrastructure/ReservationRepository.j
 import { ReservationService } from '../application/ReservationService.js';
 import { Guest } from '../domain/Guest.js';
 import { GuestRepository } from '../infrastructure/GuestRepository.js';
+import { authenticateJWT, isAdmin, isRecepcionista } from '../authMiddleware.js';
 
 export default function reservationController() {
   const router = express.Router();
@@ -11,7 +12,7 @@ export default function reservationController() {
   const guestRepository = new GuestRepository();
 
   // Atualizar valor (amount) da reserva
-  router.patch('/reservations/:id/amount', (req, res) => {
+  router.patch('/reservations/:id/amount', authenticateJWT, isRecepcionista, (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const { amount } = req.body;
@@ -31,7 +32,7 @@ export default function reservationController() {
 });
 
   // Relatório de faturamento por período
-  router.get('/reports/revenue', (req, res) => {
+  router.get('/reports/revenue', authenticateJWT, isRecepcionista, (req, res) => {
   const { start, end } = req.query;
   if (!start || !end) {
     return res.status(400).json({ error: 'Informe start e end no formato YYYY-MM-DD' });
@@ -47,7 +48,7 @@ export default function reservationController() {
 });
 
   // Consultar ocupação de quartos em uma data
-  router.get('/rooms/occupancy', (req, res) => {
+  router.get('/rooms/occupancy', authenticateJWT, isRecepcionista, (req, res) => {
   const { date } = req.query;
   if (!date) {
     return res.status(400).json({ error: 'Informe a data no formato YYYY-MM-DD' });
@@ -61,14 +62,14 @@ export default function reservationController() {
 });
 
   // Listar reservas ativas
-  router.get('/reservations/active', (req, res) => {
+  router.get('/reservations/active', authenticateJWT, isRecepcionista, (req, res) => {
   // Ativa = não cancelada e não finalizada (sem checkOutStatus true)
   const all = reservationRepository.findAll();
   const active = all.filter(r => !r.cancelled && !r.checkOutStatus);
   res.json(active);
 });
   // Cadastro de hóspede
-  router.post('/guests', (req, res) => {
+  router.post('/guests', authenticateJWT, isRecepcionista, (req, res) => {
   try {
     const { name, document, email, phone } = req.body;
     if (!name || !document) {
@@ -87,12 +88,12 @@ export default function reservationController() {
 });
 
   // Listar hóspedes
-  router.get('/guests', (req, res) => {
+  router.get('/guests', authenticateJWT, isRecepcionista, (req, res) => {
   res.json(guestRepository.findAll());
 });
 
   // Atualizar status de pagamento da reserva
-  router.patch('/reservations/:id/payment', (req, res) => {
+  router.patch('/reservations/:id/payment', authenticateJWT, isRecepcionista, (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const { paymentStatus } = req.body;
@@ -107,7 +108,7 @@ export default function reservationController() {
 });
 
   // Check-in
-  router.post('/reservations/:id/checkin', (req, res) => {
+  router.post('/reservations/:id/checkin', authenticateJWT, isRecepcionista, (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const reservation = reservationService.checkIn(id);
@@ -118,7 +119,7 @@ export default function reservationController() {
 });
 
   // Check-out
-  router.post('/reservations/:id/checkout', (req, res) => {
+  router.post('/reservations/:id/checkout', authenticateJWT, isRecepcionista, (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const reservation = reservationService.checkOut(id);
@@ -129,7 +130,7 @@ export default function reservationController() {
 });
 
   // Cancelamento de reserva
-  router.post('/reservations/:id/cancel', (req, res) => {
+  router.post('/reservations/:id/cancel', authenticateJWT, isRecepcionista, (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const reservation = reservationService.cancelReservation(id);
@@ -139,7 +140,7 @@ export default function reservationController() {
   }
 });
 
-  router.post('/reservations', (req, res) => {
+  router.post('/reservations', authenticateJWT, isRecepcionista, (req, res) => {
   try {
     console.log('POST /reservations body:', req.body);
     const { userId, guestId, roomId, checkIn, checkOut } = req.body;
@@ -154,7 +155,7 @@ export default function reservationController() {
   }
 });
 
-  router.get('/reservations', (req, res) => {
+  router.get('/reservations', authenticateJWT, isRecepcionista, (req, res) => {
   res.json(reservationService.getAllReservations());
 });
 

@@ -1,4 +1,6 @@
+
 import express from 'express';
+import { authenticateJWT, isAdmin } from './authMiddleware.js';
 
 const app = express();
 app.use(express.json());
@@ -13,7 +15,7 @@ app.get('/', (req, res) => {
 });
 
 // Criação de quarto
-app.post('/rooms', (req, res) => {
+app.post('/rooms', authenticateJWT, isAdmin, (req, res) => {
   const { number, type, price } = req.body;
   if (number == null || type == null || price == null) {
     return res.status(400).json({ error: 'number, type e price são obrigatórios' });
@@ -40,7 +42,7 @@ app.post('/rooms', (req, res) => {
   res.status(201).json(room);
 });
 
-// Listar quartos
+// Listar quartos (público)
 app.get('/rooms', (req, res) => {
   res.json(rooms);
 });
