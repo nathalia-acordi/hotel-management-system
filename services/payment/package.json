@@ -1,10 +1,10 @@
 {
   "name": "payment-service",
   "version": "1.0.0",
-  "main": "src/index.js",
+  "main": "src/index.mjs",
   "scripts": {
-    "start": "node src/index.js",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.cjs --coverage"
+  "start": "node src/index.mjs",
+  "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.mjs --coverage"
   },
   "dependencies": {
     "express": "^5.1.0",

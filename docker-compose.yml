@@ -46,10 +46,12 @@ services:
     build: ./services/auth
     container_name: auth
     ports:
-      - "3001:3000"
+      - "3001:3001"
     environment:
       - NODE_ENV=development
       - USER_URL=http://user:3000
+      - USER_SERVICE_URL=http://user:3000
+      - PORT=3001
     depends_on:
       - user
       - rabbitmq

@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { publishLoginEvent, createLoginEvent } from '../infrastructure/rabbitmq.js';
 
 // Configs
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:3000';
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL;
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 
 export const login = async (req, res) => {

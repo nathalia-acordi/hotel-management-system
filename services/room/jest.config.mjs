@@ -1,6 +1,6 @@
-module.exports = {
+export default {
   testEnvironment: 'node',
   transform: {},
-  testMatch: ['**/*.test.mjs'],
+  testMatch: ['**/*.test.mjs', '**/*.test.js'],
   moduleNameMapper: {},
 };

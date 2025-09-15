@@ -30,6 +30,10 @@ app.get('/rooms', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3004;
-app.listen(PORT, () => {
-	console.log(`Room Service running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+	app.listen(PORT, () => {
+		console.log(`Room Service running on port ${PORT}`);
+	});
+}
+
+export default app;

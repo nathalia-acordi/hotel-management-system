@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node src/interfaces/server.js",
-    "test:integration": "set USER_URL=http://localhost:3000&& set AUTH_URL=http://localhost:3001&& jest tests/integrationAuthUser.test.js",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.cjs --coverage"
+  "test:integration": "set USER_URL=http://localhost:3005&& set AUTH_URL=http://localhost:3001&& jest tests/integrationAuthUser.test.js",
+  "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.mjs --coverage"
   },
   "dependencies": {
     "amqplib": "^0.10.9",

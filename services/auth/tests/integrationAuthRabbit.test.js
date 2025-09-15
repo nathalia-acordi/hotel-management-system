@@ -1,5 +1,6 @@
-const amqp = require('amqplib');
-const axios = require('axios');
+
+import amqp from 'amqplib';
+import axios from 'axios';
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost';
 const EXCHANGE = 'auth';

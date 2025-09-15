@@ -7,15 +7,27 @@ export class ReservationService {
   }
 
   createReservation({ userId, guestId, roomId, checkIn, checkOut }) {
-    if (!userId || !roomId || !checkIn || !checkOut) {
+    // Validação de campos obrigatórios
+    if (userId == null || roomId == null || !checkIn || !checkOut) {
       throw new Error('userId, roomId, checkIn e checkOut são obrigatórios.');
+    }
+    // Validação de IDs positivos
+    if (typeof userId !== 'number' || userId <= 0 || typeof roomId !== 'number' || roomId <= 0) {
+      throw new Error('userId e roomId devem ser números positivos.');
+    }
+    // Validação de datas
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+      throw new Error('Datas inválidas.');
+    }
+    if (checkInDate >= checkOutDate) {
+      throw new Error('checkIn deve ser anterior ao checkOut.');
     }
     // guestId pode ser omitido (caso o usuário seja o próprio hóspede)
     const finalGuestId = guestId || userId;
     // Verifica disponibilidade do quarto
     const all = this.reservationRepository.findAll();
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
     const overlapping = all.some(r =>
       r.roomId === roomId &&
       new Date(r.checkIn) < checkOutDate && checkInDate < new Date(r.checkOut)

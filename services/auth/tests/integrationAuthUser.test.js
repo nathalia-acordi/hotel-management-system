@@ -1,10 +1,11 @@
-const axios = require('axios');
+
+import axios from 'axios';
 
 // Teste de integração Auth ↔ User Service
 // Pré-requisito: ambos os serviços devem estar rodando (ex: via Docker Compose)
 describe('Integração Auth ↔ User Service', () => {
   const AUTH_URL = process.env.AUTH_URL || 'http://localhost:3001';
-  const USER_URL = process.env.USER_URL || 'http://localhost:3000';
+  const USER_URL = process.env.USER_URL || 'http://localhost:3005';
 
   it('deve autenticar usuário válido via Auth Service (chamando User Service)', async () => {
     // Cria usuário de teste no User Service (ajuste conforme sua API)
