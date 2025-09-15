@@ -31,6 +31,18 @@ describe('ReservationService', () => {
     expect(repo.findAll().length).toBe(1);
   });
 
+  it('não permite reservar o mesmo quarto em datas sobrepostas', () => {
+    reservationService.createReservation({ userId: 1, roomId: 2, checkIn: '2025-09-14', checkOut: '2025-09-16' });
+    // Sobreposição total
+    expect(() => reservationService.createReservation({ userId: 2, roomId: 2, checkIn: '2025-09-15', checkOut: '2025-09-17' })).toThrow('Quarto já reservado');
+    // Sobreposição parcial (início)
+    expect(() => reservationService.createReservation({ userId: 3, roomId: 2, checkIn: '2025-09-13', checkOut: '2025-09-15' })).toThrow('Quarto já reservado');
+    // Sobreposição parcial (fim)
+    expect(() => reservationService.createReservation({ userId: 4, roomId: 2, checkIn: '2025-09-16', checkOut: '2025-09-18' })).not.toThrow();
+    // Outro quarto pode ser reservado normalmente
+    expect(() => reservationService.createReservation({ userId: 5, roomId: 3, checkIn: '2025-09-14', checkOut: '2025-09-16' })).not.toThrow();
+  });
+
   it('lança erro se faltar campos obrigatórios', () => {
     expect(() => reservationService.createReservation({})).toThrow();
   });
