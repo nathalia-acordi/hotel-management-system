@@ -1,3 +1,8 @@
+// reportsReservation.test.js
+// Teste de integração: relatórios e consultas de reservas
+// - Garante que apenas usuários autorizados podem acessar relatórios
+// - Valida regras de negócio: receita, ocupação, reservas ativas, etc
+
 const axios = require('axios');
 
 describe('Relatórios e consultas (com autenticação e roles)', () => {
@@ -8,17 +13,16 @@ describe('Relatórios e consultas (com autenticação e roles)', () => {
   let reservation1, reservation2;
 
   beforeAll(async () => {
-    // Cadastra usuários
+    // Cadastra usuários e obtém tokens
     await axios.post(`${USER_URL}/register`, { username: 'admin2', password: '123', role: 'admin' });
     await axios.post(`${USER_URL}/register`, { username: 'recep2', password: '123', role: 'recepcionista' });
     await axios.post(`${USER_URL}/register`, { username: 'user2', password: '123', role: 'user' });
 
-    // Faz login e pega tokens
     adminToken = (await axios.post(`${AUTH_URL}/login`, { username: 'admin2', password: '123' })).data.token;
     recepToken = (await axios.post(`${AUTH_URL}/login`, { username: 'recep2', password: '123' })).data.token;
     userToken = (await axios.post(`${AUTH_URL}/login`, { username: 'user2', password: '123' })).data.token;
 
-    // Cadastra hóspedes
+    // Cadastra hóspedes (ou busca se já existir)
     async function getOrCreateGuest(name, document, email, phone) {
       try {
         return (await axios.post(`${baseReservation}/guests`, { name, document, email, phone }, {

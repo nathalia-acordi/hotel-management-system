@@ -1,3 +1,8 @@
+// reservationGuest.test.js
+// Teste de integração: reserva para terceiros (guestId ≠ userId)
+// - Garante que apenas recepcionista pode criar reserva para outro hóspede
+// - Valida restrição para user comum
+
 const axios = require('axios');
 
 describe('Reserva para terceiros (guestId ≠ userId, com autenticação e roles)', () => {
@@ -7,7 +12,7 @@ describe('Reserva para terceiros (guestId ≠ userId, com autenticação e roles
   let guest, recepToken, userToken, userId = 1;
 
   beforeAll(async () => {
-    // Cadastra usuários
+    // Cadastra usuários e obtém tokens
     await axios.post(`${USER_URL}/register`, { username: 'recep4', password: '123', role: 'recepcionista' });
     await axios.post(`${USER_URL}/register`, { username: 'user4', password: '123', role: 'user' });
     recepToken = (await axios.post(`${AUTH_URL}/login`, { username: 'recep4', password: '123' })).data.token;
@@ -26,6 +31,7 @@ describe('Reserva para terceiros (guestId ≠ userId, com autenticação e roles
   });
 
   it('recepcionista pode criar reserva para hóspede diferente do usuário', async () => {
+    // Testa fluxo de reserva para terceiros
     const res = await axios.post(`${baseReservation}/reservations`, {
       userId,
       guestId: guest.id,
@@ -48,6 +54,7 @@ describe('Reserva para terceiros (guestId ≠ userId, com autenticação e roles
   });
 
   it('user comum NÃO pode criar reserva para terceiros', async () => {
+    // Testa restrição para user comum
     await expect(
       axios.post(`${baseReservation}/reservations`, {
         userId: 2,

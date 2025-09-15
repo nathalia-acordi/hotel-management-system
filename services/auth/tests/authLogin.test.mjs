@@ -1,4 +1,9 @@
 import { jest } from '@jest/globals';
+// Testes unitários do endpoint de login do Auth Service
+// - Usa mocks para axios e RabbitMQ
+// - Cobre fluxos de sucesso, erro de autenticação e erro de rede
+// - Garante publicação de evento de login
+
 const mockAxios = { post: jest.fn() };
 const mockRabbit = {
   publishLoginEvent: jest.fn(),
@@ -25,7 +30,6 @@ describe('Auth Service - POST /login', () => {
   let axios;
   let rabbit;
 
-
   beforeEach(() => {
     axios = mockAxios;
     rabbit = mockRabbit;
@@ -34,6 +38,7 @@ describe('Auth Service - POST /login', () => {
   });
 
   it('retorna token se usuário válido', async () => {
+    // Testa fluxo de sucesso: usuário válido, token gerado, evento publicado
     axios.post.mockResolvedValue({ data: { valid: true, id: 1, role: 'user' } });
     const res = await request(app).post('/login').send({ username: 'test', password: '123' });
     expect(res.statusCode).toBe(200);
@@ -42,6 +47,7 @@ describe('Auth Service - POST /login', () => {
   });
 
   it('retorna 401 se usuário inválido', async () => {
+    // Testa fluxo de usuário inválido
     axios.post.mockResolvedValue({ data: { valid: false } });
     const res = await request(app).post('/login').send({ username: 'test', password: 'errada' });
     expect(res.statusCode).toBe(401);
@@ -49,7 +55,8 @@ describe('Auth Service - POST /login', () => {
   });
 
   it('retorna 401 se erro na requisição', async () => {
-    axios.post.mockRejectedValue(new Error('erro')); // simula erro de rede
+    // Testa erro de rede ou exceção
+    axios.post.mockRejectedValue(new Error('erro'));
     const res = await request(app).post('/login').send({ username: 'test', password: '123' });
     expect(res.statusCode).toBe(401);
     expect(res.body.token).toBeUndefined();

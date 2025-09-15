@@ -1,3 +1,8 @@
+// reservationCancel.test.js
+// Teste de integração: fluxo de cancelamento de reservas
+// - Garante que apenas recepcionista pode cancelar
+// - Valida erros de fluxo: duplo cancelamento, cancelamento após check-out, etc
+
 const axios = require('axios');
 
 describe('Cancelamento de reserva (com autenticação e roles)', () => {
@@ -7,6 +12,7 @@ describe('Cancelamento de reserva (com autenticação e roles)', () => {
   let recepToken, userToken, reservation;
 
   beforeAll(async () => {
+    // Cadastra usuários e obtém tokens
     await axios.post(`${USER_URL}/register`, { username: 'recep6', password: '123', role: 'recepcionista' });
     await axios.post(`${USER_URL}/register`, { username: 'user6', password: '123', role: 'user' });
     recepToken = (await axios.post(`${AUTH_URL}/login`, { username: 'recep6', password: '123' })).data.token;
@@ -25,6 +31,7 @@ describe('Cancelamento de reserva (com autenticação e roles)', () => {
   });
 
   it('recepcionista pode cancelar uma reserva existente', async () => {
+    // Testa fluxo de cancelamento
     const res = await axios.post(`${baseUrl}/reservations/${reservation.id}/cancel`, {}, {
       headers: { Authorization: `Bearer ${recepToken}` }
     });
@@ -33,6 +40,7 @@ describe('Cancelamento de reserva (com autenticação e roles)', () => {
   });
 
   it('user comum NÃO pode cancelar reserva', async () => {
+    // Testa restrição de permissão
     await expect(
       axios.post(`${baseUrl}/reservations/${reservation.id}/cancel`, {}, {
         headers: { Authorization: `Bearer ${userToken}` }
@@ -41,6 +49,7 @@ describe('Cancelamento de reserva (com autenticação e roles)', () => {
   });
 
   it('não permite cancelar duas vezes', async () => {
+    // Testa erro de fluxo: duplo cancelamento
     try {
       await axios.post(`${baseUrl}/reservations/${reservation.id}/cancel`, {}, {
         headers: { Authorization: `Bearer ${recepToken}` }
@@ -53,6 +62,7 @@ describe('Cancelamento de reserva (com autenticação e roles)', () => {
   });
 
   it('não permite cancelar reserva já finalizada (check-out)', async () => {
+    // Testa erro de fluxo: cancelamento após check-out
     // Cria nova reserva
     const res2 = await axios.post(`${baseUrl}/reservations`, {
       userId: 2,

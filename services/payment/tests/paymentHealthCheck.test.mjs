@@ -1,7 +1,9 @@
 import request from 'supertest';
 import express from 'express';
 
-// Simula o app do Payment Service
+
+// Teste de health check do Payment Service
+// Garante que o endpoint raiz responde corretamente
 const app = express();
 app.get('/', (req, res) => {
   res.send('Payment Service running');

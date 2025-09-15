@@ -2,6 +2,10 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import { login } from './authController.js';
 
+// server.js do Auth Service
+// - Permite injeção de dependências (loginMiddleware) para facilitar testes
+// - Expõe endpoints: health, login e raiz
+// - Inicializa servidor exceto em ambiente de teste
 
 export function createApp({ loginMiddleware = login } = {}) {
 	const app = express();
@@ -18,6 +22,7 @@ export function createApp({ loginMiddleware = login } = {}) {
 	return app;
 }
 
+// Inicialização padrão (exceto em testes)
 if (process.env.NODE_ENV !== 'test') {
 	const app = createApp();
 	const PORT = process.env.PORT || 3001;

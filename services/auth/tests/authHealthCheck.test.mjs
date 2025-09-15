@@ -14,3 +14,12 @@ describe('Auth Service health check', () => {
     expect(res.text).toBe('Auth Service running');
   });
 });
+// Teste de health check do Auth Service
+// Garante que o endpoint /health responde corretamente
+it('GET /health deve retornar status 200 e json', async () => {
+  const app = createApp();
+  const res = await request(app).get('/health');
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty('status', 'ok');
+  expect(res.body).toHaveProperty('service', 'auth');
+});

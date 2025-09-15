@@ -1,3 +1,8 @@
+// reservationOverbooking.test.js
+// Teste de integração: valida prevenção de overbooking (dupla reserva para o mesmo quarto e período)
+// - Garante que apenas recepcionista pode reservar
+// - Valida que reservas sobrepostas são rejeitadas
+
 const axios = require('axios');
 
 describe('Reserva - Overbooking (com autenticação e roles)', () => {
@@ -9,6 +14,7 @@ describe('Reserva - Overbooking (com autenticação e roles)', () => {
   let reserva1;
 
   beforeAll(async () => {
+    // Cadastra usuários e obtém tokens
     await axios.post(`${USER_URL}/register`, { username: 'recep3', password: '123', role: 'recepcionista' });
     await axios.post(`${USER_URL}/register`, { username: 'user3', password: '123', role: 'user' });
     recepToken = (await axios.post(`${AUTH_URL}/login`, { username: 'recep3', password: '123' })).data.token;
@@ -16,6 +22,7 @@ describe('Reserva - Overbooking (com autenticação e roles)', () => {
   });
 
   it('recepcionista pode reservar um quarto disponível', async () => {
+    // Testa reserva válida
     const res = await axios.post(`${RESERVATION_URL}/reservations`, {
       userId: 1,
       roomId: 99,
@@ -29,6 +36,7 @@ describe('Reserva - Overbooking (com autenticação e roles)', () => {
   });
 
   it('user comum NÃO pode reservar', async () => {
+    // Testa restrição de permissão
     await expect(
       axios.post(`${RESERVATION_URL}/reservations`, {
         userId: 2,
@@ -42,6 +50,7 @@ describe('Reserva - Overbooking (com autenticação e roles)', () => {
   });
 
   it('deve rejeitar reserva sobreposta para o mesmo quarto (recepcionista)', async () => {
+    // Testa prevenção de overbooking
     try {
       await axios.post(`${RESERVATION_URL}/reservations`, {
         userId: 3,

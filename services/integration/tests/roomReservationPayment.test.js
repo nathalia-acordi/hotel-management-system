@@ -1,3 +1,8 @@
+// roomReservationPayment.test.js
+// Teste de integração ponta a ponta: fluxo de criação de quarto, reserva e pagamento
+// - Valida permissões de admin, recepcionista e user
+// - Garante integração entre Room, Reservation e Payment Service
+
 const axios = require('axios');
 
 describe('Fluxo de reserva e pagamento (com autenticação e roles)', () => {
@@ -13,18 +18,18 @@ describe('Fluxo de reserva e pagamento (com autenticação e roles)', () => {
   let payment;
 
   beforeAll(async () => {
-    // Cadastra usuários
+    // Cadastra usuários de cada role e obtém tokens
     await axios.post(`${USER_URL}/register`, { username: 'admin', password: '123', role: 'admin' });
     await axios.post(`${USER_URL}/register`, { username: 'recep', password: '123', role: 'recepcionista' });
     await axios.post(`${USER_URL}/register`, { username: 'user', password: '123', role: 'user' });
 
-    // Faz login e pega tokens
     adminToken = (await axios.post(`${AUTH_URL}/login`, { username: 'admin', password: '123' })).data.token;
     recepToken = (await axios.post(`${AUTH_URL}/login`, { username: 'recep', password: '123' })).data.token;
     userToken = (await axios.post(`${AUTH_URL}/login`, { username: 'user', password: '123' })).data.token;
   });
 
   it('admin pode criar um quarto', async () => {
+    // Testa permissão de admin para criar quarto
     const res = await axios.post(`${ROOM_URL}/rooms`, {
       number: '101',
       type: 'single',
@@ -38,6 +43,7 @@ describe('Fluxo de reserva e pagamento (com autenticação e roles)', () => {
   });
 
   it('user comum NÃO pode criar um quarto', async () => {
+    // Testa restrição de user comum
     await expect(
       axios.post(`${ROOM_URL}/rooms`, {
         number: '102', type: 'single', price: 200
@@ -48,6 +54,7 @@ describe('Fluxo de reserva e pagamento (com autenticação e roles)', () => {
   });
 
   it('recepcionista NÃO pode criar um quarto', async () => {
+    // Testa restrição de recepcionista
     await expect(
       axios.post(`${ROOM_URL}/rooms`, {
         number: '103', type: 'single', price: 200

@@ -1,3 +1,8 @@
+// reservationCheckinCheckout.test.js
+// Teste de integração: fluxo de check-in e check-out de reservas
+// - Garante que apenas recepcionista pode realizar check-in/out
+// - Valida restrições para user comum e erros de fluxo (duplo check-in, etc)
+
 const axios = require('axios');
 
 describe('Reserva - Check-in e Check-out (com autenticação e roles)', () => {
@@ -7,6 +12,7 @@ describe('Reserva - Check-in e Check-out (com autenticação e roles)', () => {
   let recepToken, userToken, reserva;
 
   beforeAll(async () => {
+    // Cadastra usuários e obtém tokens
     await axios.post(`${USER_URL}/register`, { username: 'recep5', password: '123', role: 'recepcionista' });
     await axios.post(`${USER_URL}/register`, { username: 'user5', password: '123', role: 'user' });
     recepToken = (await axios.post(`${AUTH_URL}/login`, { username: 'recep5', password: '123' })).data.token;
@@ -14,6 +20,7 @@ describe('Reserva - Check-in e Check-out (com autenticação e roles)', () => {
   });
 
   it('recepcionista pode criar uma reserva', async () => {
+    // Testa criação de reserva
     const res = await axios.post(`${RESERVATION_URL}/reservations`, {
       userId: 10,
       roomId: 88,
@@ -27,6 +34,7 @@ describe('Reserva - Check-in e Check-out (com autenticação e roles)', () => {
   });
 
   it('user comum NÃO pode fazer check-in', async () => {
+    // Testa restrição de permissão
     await expect(
       axios.post(`${RESERVATION_URL}/reservations/${reserva.id}/checkin`, {}, {
         headers: { Authorization: `Bearer ${userToken}` }
@@ -35,6 +43,7 @@ describe('Reserva - Check-in e Check-out (com autenticação e roles)', () => {
   });
 
   it('recepcionista pode fazer check-in', async () => {
+    // Testa fluxo de check-in
     const res = await axios.post(`${RESERVATION_URL}/reservations/${reserva.id}/checkin`, {}, {
       headers: { Authorization: `Bearer ${recepToken}` }
     });
@@ -43,6 +52,7 @@ describe('Reserva - Check-in e Check-out (com autenticação e roles)', () => {
   });
 
   it('recepcionista pode fazer check-out após check-in', async () => {
+    // Testa fluxo de check-out
     const res = await axios.post(`${RESERVATION_URL}/reservations/${reserva.id}/checkout`, {}, {
       headers: { Authorization: `Bearer ${recepToken}` }
     });
@@ -51,6 +61,7 @@ describe('Reserva - Check-in e Check-out (com autenticação e roles)', () => {
   });
 
   it('não permite check-in duplo', async () => {
+    // Testa erro de fluxo: check-in duplo
     try {
       await axios.post(`${RESERVATION_URL}/reservations/${reserva.id}/checkin`, {}, {
         headers: { Authorization: `Bearer ${recepToken}` }

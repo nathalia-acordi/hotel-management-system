@@ -1,13 +1,14 @@
-
-
-
 import axios from 'axios';
 
-// Aumenta timeout global para testes de integração em Docker
-import { jest } from '@jest/globals';
-jest.setTimeout(20000);
+// Teste de integração Auth ↔ User Service
+// - Pré-requisito: ambos os serviços devem estar rodando (ex: via Docker Compose)
+// - Sincroniza startup dos serviços para evitar race conditions
+// - Cobre fluxo de sucesso (token) e erro (credenciais inválidas)
 
-// Aguarda User Service ficar disponível (para rodar em Docker Compose)
+import { jest } from '@jest/globals';
+jest.setTimeout(20000); // Timeout maior para ambiente Docker
+
+// Aguarda User Service ficar disponível (útil em ambientes orquestrados)
 async function waitForUserService(url, timeout = 30000) {
   const start = Date.now();
   while (Date.now() - start < timeout) {
@@ -22,13 +23,8 @@ async function waitForUserService(url, timeout = 30000) {
   throw new Error('User Service não respondeu em tempo hábil');
 }
 
-// Teste de integração Auth ↔ User Service
-// Pré-requisito: ambos os serviços devem estar rodando (ex: via Docker Compose)
-
 describe('Integração Auth ↔ User Service', () => {
-  console.log('ENV AUTH_URL:', process.env.AUTH_URL);
-  console.log('ENV USER_URL:', process.env.USER_URL);
-  console.log('ENV USER_SERVICE_URL:', process.env.USER_SERVICE_URL);
+  // Lê variáveis de ambiente para URLs
   const AUTH_URL = process.env.AUTH_URL || 'http://localhost:3001';
   const USER_URL = process.env.USER_URL || 'http://localhost:3005';
 
@@ -38,32 +34,34 @@ describe('Integração Auth ↔ User Service', () => {
   });
 
   it('deve autenticar usuário válido via Auth Service (chamando User Service)', async () => {
-    // Cria usuário de teste no User Service (ajuste conforme sua API)
+    // Cria usuário de teste no User Service
     await axios.post(`${USER_URL}/register`, {
       username: 'integration2',
       password: '123456',
       role: 'user'
     });
-  // Aguarda 1s para garantir persistência
-  await new Promise(r => setTimeout(r, 1000));
+    // Aguarda persistência
+    await new Promise(r => setTimeout(r, 1000));
 
     // Health check explícito antes do login
     try {
       await axios.get(`${USER_URL}/health`);
-      console.log('Health check do User Service OK antes do login.');
     } catch (e) {
+      // Loga erro mas não falha
       console.error('Health check do User Service FALHOU antes do login:', e?.message);
     }
     // Delay extra para garantir propagação de DNS/rede
     await new Promise(r => setTimeout(r, 2000));
     // Tenta login via Auth Service
     let res;
+
     try {
       res = await axios.post(`${AUTH_URL}/login`, {
         username: 'integration2',
         password: '123456'
       });
     } catch (err) {
+      // Loga erro detalhado
       console.error('Erro no login via Auth Service:', {
         status: err?.response?.status,
         data: err?.response?.data,
@@ -77,6 +75,7 @@ describe('Integração Auth ↔ User Service', () => {
   });
 
   it('deve rejeitar login inválido', async () => {
+    // Testa fluxo de erro: credenciais inválidas
     try {
       await axios.post(`${AUTH_URL}/login`, {
         username: 'integration',

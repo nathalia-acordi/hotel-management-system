@@ -1,3 +1,8 @@
+// paymentReservationStatus.test.js
+// Teste de integração ponta a ponta: pagamento e atualização de status da reserva
+// - Garante que, ao registrar um pagamento "pago", o status da reserva correspondente é atualizado para "pago"
+// - Valida autenticação, roles e integração entre Payment e Reservation Service
+
 const axios = require('axios');
 
 describe('Pagamento e status da reserva (com autenticação e roles)', () => {
@@ -8,10 +13,11 @@ describe('Pagamento e status da reserva (com autenticação e roles)', () => {
   let recepToken, reservation;
 
   beforeAll(async () => {
+    // Cria usuário recepcionista e obtém token
     await axios.post(`${USER_URL}/register`, { username: 'recep7', password: '123', role: 'recepcionista' });
     recepToken = (await axios.post(`${AUTH_URL}/login`, { username: 'recep7', password: '123' })).data.token;
 
-    // Cria reserva
+    // Cria reserva para testar integração
     const res = await axios.post(`${baseReservation}/reservations`, {
       userId: 1,
       roomId: 201,
@@ -25,7 +31,7 @@ describe('Pagamento e status da reserva (com autenticação e roles)', () => {
 
   it('cria pagamento e atualiza status da reserva para pago', async () => {
     try {
-      // Cria pagamento
+      // Cria pagamento com status "pago" (integração Payment → Reservation)
       const payRes = await axios.post(`${basePayment}/payments`, {
         reservationId: reservation.id,
         amount: 500,
@@ -35,7 +41,7 @@ describe('Pagamento e status da reserva (com autenticação e roles)', () => {
       expect(payRes.status).toBe(201);
       expect(payRes.data.status).toBe('pago');
 
-      // Consulta reserva
+      // Consulta reserva e valida atualização do status
       const res2 = await axios.get(`${baseReservation}/reservations`, {
         headers: { Authorization: `Bearer ${recepToken}` }
       });

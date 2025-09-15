@@ -1,25 +1,32 @@
-// Entry point Reservation Service
-
+// index.js - Entry point do Reservation Service
+// - Aplica Clean Architecture: separa camadas de interface, domínio e infraestrutura
+// - Permite injeção de middlewares para facilitar testes (mock de autenticação, etc)
+// - Integração com RabbitMQ para eventos de usuário criado
 
 import express from 'express';
 import reservationController from './interfaces/reservationController.js';
 import { startUserCreatedConsumer } from './rabbitmqConsumer.js';
 
+// Função factory para criar o app com middlewares injetáveis
 export function createApp(middlewares = {}) {
   const app = express();
   app.use(express.json());
+  // Health check
   app.get('/', (req, res) => {
     res.send('Reservation Service running');
   });
+  // Injeta controller principal com middlewares customizados
   app.use('/', reservationController(middlewares));
   return app;
 }
 
+// Inicialização padrão (exceto em testes)
 if (process.env.NODE_ENV !== 'test') {
   const app = createApp();
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`Reservation Service running on port ${PORT}`);
+    // Inicia consumer RabbitMQ para eventos de usuário criado
     startUserCreatedConsumer();
   });
 }
