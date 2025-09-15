@@ -1,6 +1,7 @@
 export default {
   testEnvironment: 'node',
   transform: {},
-  testMatch: ['**/*.test.mjs', '**/*.test.js'],
+  rootDir: '.',
+  testMatch: ['<rootDir>/tests/**/*.test.mjs', '<rootDir>/tests/**/*.test.js'],
   moduleNameMapper: {},
 };

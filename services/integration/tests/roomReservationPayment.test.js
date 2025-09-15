@@ -1,5 +1,3 @@
-
-// Teste de integração Room/Reservation/Payment com autenticação e roles
 const axios = require('axios');
 
 describe('Fluxo de reserva e pagamento (com autenticação e roles)', () => {

@@ -1,4 +1,3 @@
-
 const axios = require('axios');
 
 describe('Reserva para terceiros (guestId ≠ userId, com autenticação e roles)', () => {

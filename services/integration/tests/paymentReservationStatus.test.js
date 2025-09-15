@@ -1,4 +1,3 @@
-
 const axios = require('axios');
 
 describe('Pagamento e status da reserva (com autenticação e roles)', () => {

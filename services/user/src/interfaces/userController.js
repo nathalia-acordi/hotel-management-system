@@ -8,6 +8,13 @@ const userService = new UserService(userRepository, publishEvent);
 
 export const validate = async (req, res) => {
   const { username, password } = req.body;
+  console.log('[USER] Recebido /validate:', {
+    username,
+    password,
+    from: req.headers['host'],
+    headers: req.headers,
+    body: req.body
+  });
   const result = await userService.validateUser(username, password);
   res.json(result);
 };
@@ -15,6 +22,7 @@ export const validate = async (req, res) => {
 export const register = async (req, res) => {
   try {
     const { username, password, role } = req.body;
+    console.log('[USER] Recebido /register:', { username, password, role });
     const user = new User(Date.now(), username, password, role || 'user');
     const saved = await userService.createUser(user);
     res.status(201).json(saved);

@@ -1,4 +1,3 @@
-
 const axios = require('axios');
 
 describe('Reserva - Check-in e Check-out (com autenticação e roles)', () => {

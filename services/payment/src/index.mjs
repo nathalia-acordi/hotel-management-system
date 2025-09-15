@@ -1,5 +1,6 @@
 import express from 'express';
 import axios from 'axios';
+import { PixDiscountStrategy, CardNoDiscountStrategy, CashDiscountStrategy } from './domain/strategy/PaymentStrategy.js';
 
 const RESERVATION_URL = process.env.RESERVATION_URL || 'http://localhost:3002';
 
@@ -52,10 +53,24 @@ app.post('/payments', async (req, res) => {
   // Se status for "pago", atualizar reserva
   if ((status || 'pendente') === 'pago') {
     try {
+      // Escolhe a estratégia de desconto
+      let strategy;
+      switch (method) {
+        case 'pix':
+          strategy = new PixDiscountStrategy();
+          break;
+        case 'dinheiro':
+          strategy = new CashDiscountStrategy();
+          break;
+        case 'cartao':
+        default:
+          strategy = new CardNoDiscountStrategy();
+      }
+      const finalAmount = strategy.calculate(amount);
+      payment.amount = finalAmount;
       await axios.patch(`${RESERVATION_URL}/reservations/${reservationId}/payment`, { paymentStatus: 'pago' });
     } catch (err) {
       // Apenas loga, não impede pagamento
-      console.error('Erro ao atualizar status da reserva:', err.message);
     }
   }
 

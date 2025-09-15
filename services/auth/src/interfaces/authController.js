@@ -11,9 +11,22 @@ export const login = async (req, res) => {
   console.log('[AUTH] Tentando login para:', username);
   try {
     // Consulta o User Service para validar credenciais
-    console.log('[AUTH] Enviando para User Service:', USER_SERVICE_URL + '/validate', { username, password });
-    const response = await axios.post(`${USER_SERVICE_URL}/validate`, { username, password });
-    console.log('[AUTH] Resposta do User Service:', response.data);
+  console.log('[AUTH] USER_SERVICE_URL:', USER_SERVICE_URL);
+  console.log('[AUTH] Enviando para User Service:', USER_SERVICE_URL + '/validate', { username, password });
+    let response;
+    try {
+      response = await axios.post(`${USER_SERVICE_URL}/validate`, { username, password });
+      console.log('[AUTH] Resposta do User Service:', response.data);
+    } catch (err) {
+      console.error('[AUTH] Erro ao chamar User Service /validate:', {
+        url: `${USER_SERVICE_URL}/validate`,
+        status: err?.response?.status,
+        data: err?.response?.data,
+        message: err?.message,
+        stack: err?.stack
+      });
+      throw err;
+    }
     if (response.data && response.data.valid) {
       // Gera token JWT
       const token = jwt.sign({ id: response.data.id, role: response.data.role }, JWT_SECRET, { expiresIn: '1h' });

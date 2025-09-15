@@ -1,5 +1,6 @@
 {
   "name": "payment-service",
+  "type": "module",
   "version": "1.0.0",
   "main": "src/index.mjs",
   "scripts": {
