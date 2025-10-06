@@ -1,4 +1,3 @@
-// Domain Entity: User (ES Modules)
 export class User {
   constructor(id, username, password, role) {
     this.id = id;

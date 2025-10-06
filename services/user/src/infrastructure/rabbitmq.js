@@ -12,6 +12,6 @@ export async function publishEvent(queue, message) {
     await channel.close();
     await conn.close();
   } catch (err) {
-    console.error('Erro ao publicar evento no RabbitMQ:', err.message);
+    throw new Error(`Erro ao publicar evento no RabbitMQ: ${err.message}`);
   }
 }
