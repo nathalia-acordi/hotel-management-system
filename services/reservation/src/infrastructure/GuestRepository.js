@@ -1,5 +1,8 @@
-export class GuestRepository {
+import { GuestRepository as AbstractGuestRepository } from '../domain/GuestRepository.js';
+
+export class GuestRepository extends AbstractGuestRepository {
   constructor() {
+    super();
     this.guests = [];
     this.nextId = 1;
   }

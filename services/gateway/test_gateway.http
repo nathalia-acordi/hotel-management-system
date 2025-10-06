@@ -1,0 +1,30 @@
+### Teste: rota pública do Gateway
+GET http://localhost:3005/
+
+### Teste: registro de usuário (rota pública)
+POST http://localhost:3005/register
+Content-Type: application/json
+
+{
+  "username": "teste_gateway",
+  "password": "123456",
+  "role": "user"
+}
+
+### Teste: login (obter JWT)
+POST http://localhost:3005/login
+Content-Type: application/json
+
+{
+  "username": "teste_gateway",
+  "password": "123456"
+}
+
+### Teste: rota protegida (listar usuários)
+# Substitua <TOKEN> pelo JWT obtido no login
+GET http://localhost:3005/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTc1Nzk2NzgyNTAwMCwicm9sZSI6InVzZXIiLCJpYXQiOjE3NTc5Njc4ODgsImV4cCI6MTc1Nzk3MTQ4OH0.RusbmzVAJIEkcZdVhhlRucuQYZBnc4Jk7wmoX6GzUdU
+
+### Teste: rota protegida (listar quartos)
+GET http://localhost:3005/rooms
+Authorization: Bearer <TOKEN>

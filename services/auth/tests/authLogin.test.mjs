@@ -1,4 +1,6 @@
 import { jest } from '@jest/globals';
+// Define USER_SERVICE_URL para evitar erro de ambiente indefinido nos logs
+process.env.USER_SERVICE_URL = 'http://localhost:3000';
 // Testes unitários do endpoint de login do Auth Service
 // - Usa mocks para axios e RabbitMQ
 // - Cobre fluxos de sucesso, erro de autenticação e erro de rede

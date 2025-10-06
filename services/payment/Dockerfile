@@ -3,8 +3,10 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-CMD ["npm", "run", "start"]
+
+# Ponto de entrada padrão para produção
+CMD ["node", "src/interfaces/server.js"]
 
 # Permite rodar testes facilmente
 ARG TEST=false
-CMD if [ "$TEST" = "true" ]; then npm test; else npm run start; fi
+CMD if [ "$TEST" = "true" ]; then npm test; else node src/interfaces/server.js; fi

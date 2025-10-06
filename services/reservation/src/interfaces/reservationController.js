@@ -1,5 +1,5 @@
 import express from 'express';
-import { ReservationRepository } from '../infrastructure/ReservationRepository.js';
+import { InMemoryReservationRepository } from '../infrastructure/InMemoryReservationRepository.js';
 import { ReservationService } from '../application/ReservationService.js';
 import { Guest } from '../domain/Guest.js';
 import { GuestRepository } from '../infrastructure/GuestRepository.js';
@@ -11,7 +11,9 @@ import { authenticateJWT, isAdmin, isRecepcionista } from '../authMiddleware.js'
 // - Permite injeção de middlewares para facilitar testes e mocks
 export default function reservationController({ authenticateJWT: authMW = authenticateJWT, isAdmin: adminMW = isAdmin, isRecepcionista: recepMW = isRecepcionista } = {}) {
   const router = express.Router();
-  const reservationRepository = new ReservationRepository();
+  // O repositório deve ser injetado pelo ponto de entrada para garantir DIP
+  // Aqui, por compatibilidade, instanciaremos se não for fornecido
+  const reservationRepository = global.__reservationRepository__ || new InMemoryReservationRepository();
   const reservationService = new ReservationService(reservationRepository);
   const guestRepository = new GuestRepository();
 
@@ -76,6 +78,9 @@ export default function reservationController({ authenticateJWT: authMW = authen
 
   // Cadastro de hóspede com validação de documento
   router.post('/guests', authMW, recepMW, (req, res) => {
+    console.log('[RESERVATION] POST /guests called');
+    console.log('[RESERVATION] Headers:', req.headers);
+    console.log('[RESERVATION] Body:', req.body);
     try {
       const { name, document, email, phone } = req.body;
       if (!name || !document) {
@@ -95,6 +100,8 @@ export default function reservationController({ authenticateJWT: authMW = authen
 
   // Listar hóspedes
   router.get('/guests', authenticateJWT, isRecepcionista, (req, res) => {
+    console.log('[RESERVATION] GET /guests called');
+    console.log('[RESERVATION] Headers:', req.headers);
     res.json(guestRepository.findAll());
   });
 

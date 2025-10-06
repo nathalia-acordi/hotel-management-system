@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 
 // Teste de integração Auth ↔ User Service

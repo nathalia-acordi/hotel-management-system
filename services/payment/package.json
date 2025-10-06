@@ -2,9 +2,9 @@
   "name": "payment-service",
   "type": "module",
   "version": "1.0.0",
-  "main": "src/index.mjs",
+  "main": "src/interfaces/server.js",
   "scripts": {
-  "start": "node src/index.mjs",
+  "start": "node src/interfaces/server.js",
   "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.mjs --coverage"
   },
   "dependencies": {

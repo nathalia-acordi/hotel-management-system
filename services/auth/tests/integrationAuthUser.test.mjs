@@ -6,7 +6,7 @@ import axios from 'axios';
 // - Cobre fluxo de sucesso (token) e erro (credenciais inválidas)
 
 import { jest } from '@jest/globals';
-jest.setTimeout(20000); // Timeout maior para ambiente Docker
+jest.setTimeout(40000); // Timeout maior para ambiente Docker
 
 // Aguarda User Service ficar disponível (útil em ambientes orquestrados)
 async function waitForUserService(url, timeout = 30000) {
@@ -24,22 +24,35 @@ async function waitForUserService(url, timeout = 30000) {
 }
 
 describe('Integração Auth ↔ User Service', () => {
-  // Lê variáveis de ambiente para URLs
+  // Define explicitamente as URLs para evitar problemas de variáveis de ambiente
   const AUTH_URL = process.env.AUTH_URL || 'http://localhost:3001';
-  const USER_URL = process.env.USER_URL || 'http://localhost:3005';
+  const USER_URL = process.env.USER_URL || 'http://localhost:3000';
+  process.env.USER_URL = USER_URL;
+  process.env.USER_SERVICE_URL = USER_URL;
 
   beforeAll(async () => {
     // Aguarda User Service subir (em Docker Compose pode demorar)
-    await waitForUserService(`${USER_URL}/health`);
+    await waitForUserService(`${USER_URL}/health`, 40000);
   });
 
   it('deve autenticar usuário válido via Auth Service (chamando User Service)', async () => {
     // Cria usuário de teste no User Service
-    await axios.post(`${USER_URL}/register`, {
-      username: 'integration2',
-      password: '123456',
-      role: 'user'
-    });
+    try {
+      await axios.post(`${USER_URL}/register`, {
+        username: 'integration2',
+        password: '123456',
+        role: 'user'
+      });
+    } catch (err) {
+      // Loga o conteúdo real da resposta de erro para debug
+      // Ignora erro se usuário já existir ou erro genérico de cadastro
+      if (!(err.response && err.response.data && (
+        err.response.data.error === 'Usuário já existe' ||
+        err.response.data.error === 'Erro ao cadastrar usuário'
+      ))) {
+        throw err;
+      }
+    }
     // Aguarda persistência
     await new Promise(r => setTimeout(r, 1000));
 

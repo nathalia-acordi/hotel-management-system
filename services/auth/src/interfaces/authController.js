@@ -52,7 +52,12 @@ export const login = async (req, res) => {
     return res.status(401).json({ error: 'Credenciais inválidas' });
   } catch (err) {
     // Erro de autenticação ou rede
-    console.error('[AUTH] Erro ao autenticar:', err?.response?.data || err.message);
+    console.error('[AUTH] Erro ao autenticar:', {
+      status: err?.response?.status,
+      data: err?.response?.data,
+      message: err?.message,
+      stack: err?.stack
+    });
     return res.status(401).json({ error: 'Credenciais inválidas' });
   }
 };

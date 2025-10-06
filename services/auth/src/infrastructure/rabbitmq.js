@@ -1,7 +1,13 @@
 // Infrastructure Layer: RabbitMQ publisher (Singleton - GoF)
 import amqplib from 'amqplib';
 
+
 let channel = null;
+
+// Função de reset para testes (não afeta produção)
+export function __resetRabbitChannel() {
+  channel = null;
+}
 
 export async function getRabbitChannel() {
   if (channel) return channel; // Singleton: sempre retorna a mesma instância

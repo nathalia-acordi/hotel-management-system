@@ -5,6 +5,7 @@
 
 import express from 'express';
 import reservationController from './interfaces/reservationController.js';
+import { InMemoryReservationRepository } from './infrastructure/InMemoryReservationRepository.js';
 import { startUserCreatedConsumer } from './rabbitmqConsumer.js';
 
 // Função factory para criar o app com middlewares injetáveis
@@ -15,7 +16,9 @@ export function createApp(middlewares = {}) {
   app.get('/', (req, res) => {
     res.send('Reservation Service running');
   });
-  // Injeta controller principal com middlewares customizados
+  // Injeção de dependência do repositório (DIP)
+  const reservationRepository = new InMemoryReservationRepository();
+  global.__reservationRepository__ = reservationRepository;
   app.use('/', reservationController(middlewares));
   return app;
 }

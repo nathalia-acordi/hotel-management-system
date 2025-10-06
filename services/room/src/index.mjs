@@ -1,20 +1,20 @@
-
 // Entry point do Room Service
 // - Permite injeção de middlewares de autenticação/autorização para facilitar testes e customização
 // - Usa RoomFactory (GoF) para criar instâncias de quartos
 // - Implementa regras de negócio de validação de quartos
+
 import express from 'express';
 import { authenticateJWT as defaultAuthenticateJWT, isAdmin as defaultIsAdmin } from './authMiddleware.js';
 import { RoomFactory } from './domain/RoomFactory.js';
+import { InMemoryRoomRepository } from './infrastructure/InMemoryRoomRepository.js';
 
 
 export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = defaultIsAdmin } = {}) {
   const app = express();
   app.use(express.json());
 
-  // Armazena quartos em memória (simulação, sem banco)
-  const rooms = [];
-  let nextRoomId = 1;
+  // Repositório de quartos (injeção de dependência)
+  const roomRepository = new InMemoryRoomRepository();
 
   // Health check endpoint
   app.get('/', (req, res) => {
@@ -22,9 +22,6 @@ export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = 
   });
 
   // Criação de quarto
-  // - Protegido por autenticação e autorização (admin)
-  // - Valida campos obrigatórios, tipos e duplicidade
-  // - Usa RoomFactory para instanciar o quarto
   app.post('/rooms', authenticateJWT, isAdmin, (req, res) => {
     const { number, type, price } = req.body;
     // Validação de campos obrigatórios
@@ -45,14 +42,13 @@ export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = 
       return res.status(400).json({ error: 'Tipo de quarto inválido' });
     }
     // Não pode haver número duplicado
-    if (rooms.some(r => r.number === number)) {
+    if (roomRepository.findByNumber(number)) {
       return res.status(400).json({ error: 'Número de quarto já cadastrado' });
     }
     try {
       // Uso real do padrão Factory
       const room = RoomFactory.create(type, number, price);
-      room.id = nextRoomId++;
-      rooms.push(room);
+      roomRepository.add(room);
       res.status(201).json(room);
     } catch (err) {
       res.status(400).json({ error: err.message });
@@ -61,7 +57,7 @@ export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = 
 
   // Listar quartos (endpoint público)
   app.get('/rooms', (req, res) => {
-    res.json(rooms);
+    res.json(roomRepository.getAll());
   });
 
   return app;

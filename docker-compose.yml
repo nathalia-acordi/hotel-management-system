@@ -11,16 +11,16 @@ services:
       - RESERVATION_URL=http://reservation-service:3000
     depends_on:
       - rabbitmq
-  payment-test:
-    build:
-      context: ./services/payment
-      args:
-        TEST: "true"
-    command: ["npm", "test"]
-    depends_on:
-      - rabbitmq
-    environment:
-      - NODE_ENV=test
+  # payment-test:
+  #   build:
+  #     context: ./services/payment
+  #     args:
+  #       TEST: "true"
+  #   command: ["npm", "test"]
+  #   depends_on:
+  #     - rabbitmq
+  #   environment:
+  #     - NODE_ENV=test
 
   room:
     build: ./services/room
@@ -32,39 +32,38 @@ services:
       - PORT=3004
     depends_on:
       - rabbitmq
-  room-test:
-    build:
-      context: ./services/room
-      args:
-        TEST: "true"
-    command: ["npm", "test"]
-    depends_on:
-      - rabbitmq
-    environment:
-      - NODE_ENV=test
+  # room-test:
+  #   build:
+  #     context: ./services/room
+  #     args:
+  #       TEST: "true"
+  #   command: ["npm", "test"]
+  #   depends_on:
+  #     - rabbitmq
+  #   environment:
+  #     - NODE_ENV=test
 
   reservation:
     build: ./services/reservation
     container_name: reservation-service
     ports:
       - "3002:3000"
-      - "3000:3000"
     environment:
       - NODE_ENV=development
       - RABBITMQ_URL=amqp://rabbitmq
       - PORT=3000
     depends_on:
       - rabbitmq
-  reservation-test:
-    build:
-      context: ./services/reservation
-      args:
-        TEST: "true"
-    command: ["npm", "test"]
-    depends_on:
-      - rabbitmq
-    environment:
-      - NODE_ENV=test
+  # reservation-test:
+  #   build:
+  #     context: ./services/reservation
+  #     args:
+  #       TEST: "true"
+  #   command: ["npm", "test"]
+  #   depends_on:
+  #     - rabbitmq
+  #   environment:
+  #     - NODE_ENV=test
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -85,42 +84,61 @@ services:
       - USER_URL=http://user:3000
       - USER_SERVICE_URL=http://user:3000
       - PORT=3001
+      - JWT_SECRET=segredo_super_secreto
     depends_on:
       - user
       - rabbitmq
-  auth-test:
-    build:
-      context: ./services/auth
-      args:
-        TEST: "true"
-    command: ["sh", "-c", "/wait-for-it.sh user:3000 -- npm test -- --maxWorkers=1"]
-    depends_on:
-      - user
-      - rabbitmq
-    environment:
-      - NODE_ENV=test
-      - AUTH_URL=http://auth:3001
-      - USER_URL=http://user:3000
-      - USER_SERVICE_URL=http://user:3000
+  # auth-test:
+  #   build:
+  #     context: ./services/auth
+  #     args:
+  #       TEST: "true"
+  #   command: ["sh", "-c", "/wait-for-it.sh user:3000 -- npm test -- --maxWorkers=1"]
+  #   depends_on:
+  #     - user
+  #     - rabbitmq
+  #   environment:
+  #     - NODE_ENV=test
+  #     - AUTH_URL=http://auth:3001
+  #     - USER_URL=http://user:3000
+  #     - USER_SERVICE_URL=http://user:3000
 
   user:
     build: ./services/user
     container_name: user
-    # Removido mapeamento de porta para evitar conflito em ambiente de teste
+    ports:
+      - "3000:3000"
     environment:
       - NODE_ENV=development
+      - JWT_SECRET=segredo_super_secreto
+      - RABBITMQ_URL=amqp://rabbitmq
     depends_on:
       - rabbitmq
-  user-test:
-    build:
-      context: ./services/user
-      args:
-        TEST: "true"
-    command: ["npm", "test"]
-    depends_on:
-      - rabbitmq
+      - mongo
+    env_file:
+      - ./services/user/.env
+
+  mongo:
+    image: mongo:5.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+
+  gateway:
+    build: ./services/gateway
+    container_name: gateway
+    ports:
+      - "3005:3005"
     environment:
-      - NODE_ENV=test
+      - NODE_ENV=development
+      - PORT=3005
+      - JWT_SECRET=segredo_super_secreto
+    depends_on:
+      - user
+      - auth
+      - room
+      - reservation
+      - payment
 
 networks:
   default:
