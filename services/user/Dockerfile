@@ -1,7 +1,7 @@
 FROM node:20.19.5-alpine
 WORKDIR /usr/src/app
 COPY package*.json ./
-RUN npm install --production
+RUN npm install --production && npm install jsonwebtoken
 COPY . .
 EXPOSE 3000
 # Permite rodar testes facilmente

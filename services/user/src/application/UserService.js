@@ -14,38 +14,66 @@ export class UserService {
   }
 
   async createUser(user) {
+    console.log('[USER SERVICE] Iniciando criação de usuário:', user);
     if (!user.username || typeof user.username !== 'string' || user.username.trim() === '') {
+      console.error('[USER SERVICE] Username inválido:', user.username);
       throw new Error('Username inválido');
     }
 
     const existingUser = await this.userRepository.findByUsername(user.username);
     if (existingUser) {
+      console.error('[USER SERVICE] Usuário já existe:', user.username);
       throw new Error('Usuário já existe');
     }
 
     if (!user.password || user.password.length < 6) {
+      console.error('[USER SERVICE] Senha fraca:', user.password);
       throw new Error('Senha fraca');
     }
 
-    // Simulando controle de concorrência com um lock
     const lockKey = `lock:${user.username}`;
     if (global[lockKey]) {
+      console.error('[USER SERVICE] Lock detectado para usuário:', user.username);
       throw new Error('Usuário já existe');
     }
     global[lockKey] = true;
 
     try {
+      console.log('[USER SERVICE] Salvando usuário no repositório:', user);
       const savedUser = await this.userRepository.save(user);
+      console.log('[USER SERVICE] Usuário salvo com sucesso:', savedUser);
 
       try {
+        console.log('[USER SERVICE] Publicando evento user.created para:', savedUser);
         await this.eventPublisher('user.created', { id: savedUser.id, username: savedUser.username, role: savedUser.role });
       } catch (err) {
-        // Log de erro removido para evitar ruído nos testes
+        console.error('[USER SERVICE] Erro ao publicar evento user.created:', err);
       }
 
       return savedUser;
     } finally {
+      console.log('[USER SERVICE] Liberando lock para usuário:', user.username);
       delete global[lockKey];
+    }
+  }
+
+  async deleteUser(username) {
+    console.log('[USER SERVICE] Iniciando deleção de usuário:', username);
+    try {
+      const deleted = await this.userRepository.deleteByUsername(username);
+      if (deleted) {
+        console.log('[USER SERVICE] Usuário deletado com sucesso:', username);
+        return true;
+      } else {
+        console.warn('[USER SERVICE] Usuário não encontrado para deleção:', username);
+        return false;
+      }
+    } catch (err) {
+      console.error('[USER SERVICE] Erro ao deletar usuário:', {
+        message: err.message,
+        stack: err.stack,
+      });
+      throw err;
     }
   }
 
