@@ -1,4 +1,3 @@
-﻿# Hotel Management System
 
 # 🏨 Hotel Management System
 
@@ -13,20 +12,29 @@
 <a href="https://restfulapi.net/" target="_blank"><img src="https://img.shields.io/badge/REST%20API-02569B?style=for-the-badge&logo=api&logoColor=white" alt="REST API"/></a>
 <a href="https://en.wikipedia.org/wiki/SOLID" target="_blank"><img src="https://img.shields.io/badge/SOLID-ff9800?style=for-the-badge&logoColor=white" alt="SOLID"/></a>
 
-<img src="https://img.shields.io/badge/Clean%20Architecture-1976d2?style=for-the-badge&logo=cloudsmith&logoColor=white" alt="Clean Architecture"/>
-<img src="https://img.shields.io/badge/GoF%20Patterns-f7c873?style=for-the-badge&logoColor=white" alt="GoF Patterns"/>
+<div align="center">
+
+  <img src="https://img.shields.io/badge/Clean%20Architecture-1976d2?style=for-the-badge&logo=cloudsmith&logoColor=white" alt="Clean Architecture"/>
+  <img src="https://img.shields.io/badge/GoF%20Patterns-f7c873?style=for-the-badge&logoColor=white" alt="GoF Patterns"/>
 
 <br>
-<img src="https://img.shields.io/badge/User%20Tests-95%25-4caf50?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="User Test Coverage"/>
-<img src="https://img.shields.io/badge/Room%20Tests-83%25-4caf50?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="Room Test Coverage"/>
-<img src="https://img.shields.io/badge/Payment%20Tests-83%25-4caf50?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="Payment Test Coverage"/>
-<img src="https://img.shields.io/badge/Reservation%20Tests-56%25-f44336?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="Reservation Test Coverage"/>
+  <br/>
+
+  <img src="https://img.shields.io/badge/User%20Tests-95%25-4caf50?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="User Test Coverage"/>
+  <img src="https://img.shields.io/badge/Room%20Tests-83%25-4caf50?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="Room Test Coverage"/>
+  <img src="https://img.shields.io/badge/Payment%20Tests-83%25-4caf50?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="Payment Test Coverage"/>
+  <img src="https://img.shields.io/badge/Reservation%20Tests-56%25-f44336?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="Reservation Test Coverage"/>
 
 </div>
+
+
+</div>
+
 
 ## ✨ Principais Funcionalidades
 
 - Gestão de hóspedes, recepcionistas e administradores com permissões distintas
+- API Gateway centralizando entrada, autenticação e proxy
 - Cadastro e autenticação de usuários (JWT)
 - Gerenciamento de quartos (criação, edição, remoção, tipos, manutenção)
 - Reservas com validação de disponibilidade, datas e regras de negócio
@@ -41,10 +49,9 @@
 
 ```text
 hotel-management-system/
-├── services/           # Microsserviços (user, auth, room, reservation, payment)
+├── services/           # Microsserviços (user, auth, room, reservation, payment, gateway)
 ├── integration/        # Testes de integração entre microsserviços
-├── docker-compose.yml  # Orquestração dos serviços, banco de dados e mensageria
-├── tests/              # Testes unitários para cada serviço
+├── docker-compose.yml  # Orquestração dos serviços e mensageria (sem Mongo container)
 └── README.md           # Este guia
 ```
 
@@ -52,87 +59,139 @@ hotel-management-system/
 
 | Microsserviço | Função |
 | ------------ | ------ |
-| **user** | Gerencia usuários/hóspedes, cadastro, autenticação, validação de documentos (CPF/RG), regras de negócio de perfil e integração com Auth. |
-| **reservation** | Controla reservas de quartos, datas, disponibilidade, regras de conflito, cancelamento, e integra com Room e Payment. |
-| **room** | Gerencia quartos, tipos, status (livre/ocupado), manutenção, e fornece dados para Reservation. |
-| **payment** | Processa pagamentos de reservas, integra com gateways, valida status e registra transações. |
-| **auth** | Responsável por autenticação, geração e validação de tokens JWT, login e integração com User. |
+| **gateway** | Entrada única; autenticação e proxy para os microsserviços. |
+| **user** | Gerencia usuários/hóspedes, cadastro, validações (CPF/RG), perfis e integração com Auth. |
+| **reservation** | Controla reservas (datas, disponibilidade), conflitos, cancelamentos; integra com Room/Payment. |
+| **room** | Gerencia quartos, tipos e status (livre/ocupado/manutenção), atendendo o Reservation. |
+| **payment** | Processa pagamentos, aplica descontos (Strategy), valida status e registra transações. |
+| **auth** | Autenticação, geração/validação de JWT, login e integração com User. |
 
 ## 🗂️ Status dos Serviços
 
-| Serviço      | Porta | Endpoint Principal         | Status |
-|--------------|-------|---------------------------|--------|
-| user         | 3000  | /users, /register         | OK     |
-| auth         | 3001  | /login, /validate         | OK     |
-| payment      | 3003  | /payments                 | OK     |
-| reservation  | 3002  | /reservations             | OK     |
-| room         | 3004  | /rooms                    | OK     |
-| RabbitMQ     | 5672/15672 | AMQP/HTTP             | OK     |
+| Serviço      | Porta Host -> Container | Endpoint Principal         | Status |
+|--------------|--------------------------|----------------------------|--------|
+| gateway      | 3005 -> 3005             | /, /health                 | OK     |
+| user         | 3000 -> 3000             | /users, /register          | OK     |
+| auth         | 3001 -> 3001             | /login, /validate          | OK     |
+| reservation  | 3002 -> 3000             | /reservations              | OK     |
+| payment      | 3003 -> 3003             | /payments                  | OK     |
+| room         | 3004 -> 3004             | /rooms                     | OK     |
+| RabbitMQ     | 5672/15672               | AMQP/HTTP (console)        | OK     |
 
 ## 🎯 Permissões por Papel
 
-| Ação                  | Admin | Recepcionista | Hóspede |
-|-----------------------|:-----:|:-------------:|:-------:|
-| Auto-cadastro         | <span style="color:#e53935;">&#10060;</span> | <span style="color:#e53935;">&#10060;</span> | <span style="color:#43a047;">&#10004;</span> |
-| Cadastrar hóspede     | <span style="color:#43a047;">&#10004;</span> | <span style="color:#43a047;">&#10004;</span> | <span style="color:#e53935;">&#10060;</span> |
-| Gerenciar reservas    | <span style="color:#e53935;">&#10060;</span> | <span style="color:#43a047;">&#10004;</span> | <span style="color:#e53935;">&#10060;</span> |
-| Gerenciar quartos     | <span style="color:#43a047;">&#10004;</span> | <span style="color:#43a047;">&#10004;</span> | <span style="color:#e53935;">&#10060;</span> |
-| Consultar relatórios  | <span style="color:#43a047;">&#10004;</span> | <span style="color:#43a047;">&#10004;</span> | <span style="color:#e53935;">&#10060;</span> |
-| Efetuar pagamento     | <span style="color:#43a047;">&#10004;</span> | <span style="color:#43a047;">&#10004;</span> | <span style="color:#e53935;">&#10060;</span> |
-| Check-in/out          | <span style="color:#43a047;">&#10004;</span> | <span style="color:#43a047;">&#10004;</span> | <span style="color:#e53935;">&#10060;</span> |
-| Cancelar reserva      | <span style="color:#e53935;">&#10060;</span> | <span style="color:#43a047;">&#10004;</span> | <span style="color:#e53935;">&#10060;</span> |
+| Ação                  | Admin | Receptionist | Guest |
+|-----------------------|:-----:|:------------:|:-----:|
+| Auto-cadastro         | ✗ | ✗ | ✓ |
+| Cadastrar hóspede     | ✓ | ✓ | ✗ |
+| Gerenciar reservas    | ✗ | ✓ | ✗ |
+| Gerenciar quartos     | ✓ | ✓ | ✗ |
+| Consultar relatórios  | ✓ | ✓ | ✗ |
+| Efetuar pagamento     | ✓ | ✓ | ✗ |
+| Check-in/out          | ✓ | ✓ | ✗ |
+| Cancelar reserva      | ✗ | ✓ | ✗ |
 
 ## 🏛️ Padrões de Arquitetura
 
-- **Clean Architecture**: Separação clara entre camadas (Domain, Application, Infrastructure, Interface), facilitando testes, manutenção e evolução. Cada serviço possui diretórios como `domain/`, `application/`, `infrastructure/` e `interface/` (ex: `services/user/domain/User.js`).
-- **GoF Patterns**: Uso real de Repository, Service, Factory e Strategy para desacoplamento e flexibilidade. Exemplos reais no código:
+- Clean Architecture: separação clara entre camadas (Domain, Application, Infrastructure, Interfaces). Exemplos por serviço.
+- GoF Patterns: Repository, Service, Factory e Strategy. Exemplos reais:
   - Repository: `services/user/src/infrastructure/UserRepository.js`
   - Service: `services/reservation/src/application/ReservationService.js`
   - Factory: `services/room/src/domain/RoomFactory.js`
   - Strategy: `services/payment/src/domain/strategy/PaymentStrategy.js`
-- **SOLID**: O design dos microsserviços busca seguir os princípios SOLID para garantir modularidade, facilidade de manutenção e extensibilidade. Destacam-se a responsabilidade única em cada classe/serviço e a facilidade para extensão de funcionalidades, como novos métodos de pagamento, sem alterar o núcleo do sistema.
-- **Docker**: Cada microserviço roda em seu próprio container, garantindo isolamento e escalabilidade. Orquestração via `docker-compose.yml` na raiz do projeto.
-- **Mensageria**: RabbitMQ para eventos e comunicação assíncrona entre serviços, integração via `amqplib`.
+- SOLID: foco em responsabilidade única e extensibilidade (ex.: novos métodos de pagamento sem alterar o core).
+- Docker: cada microserviço em seu container; orquestração via `docker-compose.yml`.
+- Mensageria: RabbitMQ para eventos e comunicação assíncrona (amqplib).
 
-## 🚀 Como Executar o Projeto
+## 🧰 Requisitos
 
-### Subindo todos os serviços
+- Windows 10/11 com PowerShell 5.1+
+- Docker Desktop 4.x com Docker Compose
+- Node.js 20 LTS (opcional para rodar testes localmente por serviço)
+- Conta/URI do MongoDB Atlas (sem container de Mongo em DEV)
 
-1. Certifique-se de ter o **Docker** e **Docker Compose** instalados.
-2. Clone o repositório:
-   ```sh
-   git clone https://github.com/nathalia-acordi/hotel-management-system.git
-   cd hotel-management-system
-   ```
-3. Suba todos os serviços:
-   ```sh
-   docker-compose up --build
-   ```
-4. Acesse os endpoints REST de cada serviço nas portas documentadas acima.
-5. O RabbitMQ estará disponível em [http://localhost:15672](http://localhost:15672) (usuário: `guest`, senha: `guest`).
+## 🔑 Variáveis de ambiente
 
-### Executando os testes
+Crie um arquivo `.env.local` na raiz (baseado em `.env.local.sample`) com:
 
-#### Testes de todos os serviços via Docker Compose
-
-```sh
-docker-compose up --build --abort-on-container-exit --remove-orphans
+```
+MONGODB_URI=mongodb+srv://<usuario>:<senha>@<cluster>/<database>?retryWrites=true&w=majority
+JWT_SECRET=altere_este_valor_no_seu_ambiente
 ```
 
-#### Testes unitários em um serviço específico
+Observações:
+- Não usamos container de Mongo; a URI deve ser do Atlas.
+- RabbitMQ é fornecido pelo docker compose; entre containers use `amqp://rabbitmq`.
+- Em DEV há fallback de JWT_SECRET no compose, mas recomendo definir no `.env.local`.
 
-1. Entre na pasta do serviço desejado, por exemplo:
-   ```sh
-   cd services/user
-   ```
-2. Instale as dependências:
-   ```sh
-   npm install
-   ```
-3. Execute os testes:
-   ```sh
-   npm test
-   ```
+## 🚀 Como Executar o Projeto (Docker)
+
+Na raiz do projeto, execute no PowerShell:
+
+```powershell
+# Build + subir todos os serviços
+docker compose up --build
+
+# Dica: em versões antigas do Docker, use 'docker-compose'
+# docker-compose up --build
+```
+
+Após os health checks ficarem verdes:
+- Gateway: http://localhost:3005
+- RabbitMQ UI: http://localhost:15672 (guest/guest)
+
+## 🧭 Fluxo rápido (via API Gateway)
+
+Endpoints principais do gateway:
+- POST /register -> User Service
+- POST /login -> Auth Service
+- GET /validate -> valida JWT (Auth)
+- Rotas protegidas: /users, /reservations, /rooms, /payments
+
+Exemplos (PowerShell):
+
+```powershell
+# 1) Registrar um hóspede
+$body = @{ name = 'Alice'; email = 'alice@example.com'; document = '12345678901'; password = 'Str0ng@Pass'; role = 'guest' } | ConvertTo-Json
+Invoke-RestMethod -Uri 'http://localhost:3005/register' -Method Post -ContentType 'application/json' -Body $body
+
+# 2) Login
+$login = @{ username = 'alice@example.com'; password = 'Str0ng@Pass' } | ConvertTo-Json
+$resp = Invoke-RestMethod -Uri 'http://localhost:3005/login' -Method Post -ContentType 'application/json' -Body $login
+$token = $resp.token
+
+# 3) Validar token
+Invoke-RestMethod -Uri 'http://localhost:3005/validate' -Headers @{ Authorization = "Bearer $token" } -Method Get
+
+# 4) Rota protegida (ex.: quartos)
+Invoke-RestMethod -Uri 'http://localhost:3005/rooms' -Headers @{ Authorization = "Bearer $token" } -Method Get
+```
+
+Se preferir curl (Windows):
+
+```powershell
+curl.exe -s -X POST http://localhost:3005/login -H "Content-Type: application/json" -d '{"username":"alice@example.com","password":"Str0ng@Pass"}' | ConvertFrom-Json
+```
+
+## 🧪 Executando os testes
+
+Todos os serviços via Docker Compose (encerra quando os testes acabam):
+
+```powershell
+docker compose up --build --abort-on-container-exit --remove-orphans
+```
+
+Unit test por serviço (ex.: user):
+
+```powershell
+cd services/user
+npm install
+npm test
+```
+
+Notas:
+- Testes usam ESM/Jest; alguns serviços têm setupFilesAfterEnv.
+- Logs ruidosos sanitizados; erros em pt-BR.
 
 ## 📋 Requisitos do Sistema — Casos de Uso
 
@@ -165,166 +224,185 @@ docker-compose up --build --abort-on-container-exit --remove-orphans
 </details>
 
 <details>
-<summary><b>UC02 — Cadastro de Hóspede por Recepcionista/Admin</b></summary>
+<summary><b>UC02 — Cadastro de Hóspede por Admin/Receptionist</b></summary>
 
-**Ator Primário:** Recepcionista/Admin
+**Ator Primário:** Receptionist/Admin
 
 **Fluxo Principal:**
-1. Recepcionista/Admin acessa endpoint `/users` (POST) autenticado.
+1. Admin/Receptionist acessa endpoint `/users` (POST) autenticado.
 2. Informa dados do hóspede.
 3. Sistema valida, cria conta e publica evento `user.created`.
-4. Recepcionista/Admin recebe confirmação.
+4. Recebe confirmação.
 
 **Fluxos Alternativos:**
 - 2a. Dados inválidos: sistema retorna erro 400.
 - 3a. Documento já cadastrado: sistema retorna erro 409.
 
 **Regras de Negócio:**
-- JWT obrigatório para acessar endpoints protegidos.
-- Senha deve ser armazenada de forma segura (hash).
+- JWT obrigatório para endpoints protegidos.
+- Senha armazenada com hash.
 
 </details>
 
 <details>
 <summary><b>UC04 — Gerenciamento de Quartos</b></summary>
 
-**Ator Primário:** Admin/Recepcionista
+**Ator Primário:** Admin/Receptionist
 
 **Fluxo Principal:**
-1. Admin/Recepcionista acessa endpoint `/rooms` autenticado.
+1. Acessa `/rooms` autenticado.
 2. Cria, edita ou remove quartos.
 3. Sistema valida:
   - Número único por quarto.
   - Preço positivo.
-  - Tipo válido (validação via Factory).
-4. Usuário recebe confirmação.
+  - Tipo válido (RoomFactory).
+4. Confirmação.
 
 **Fluxos Alternativos:**
-- 2a. Tentativa de remover quarto ocupado: sistema retorna erro 400.
-- 2b. Número duplicado: sistema retorna erro 400.
-- 2c. Preço negativo ou zero: sistema retorna erro 400.
+- 2a. Remover quarto ocupado: erro 400.
+- 2b. Número duplicado: erro 400.
+- 2c. Preço ≤ 0: erro 400.
 
 **Regras de Negócio:**
-- Apenas admin/recepcionista podem gerenciar quartos (JWT obrigatório).
-- Não é permitido remover/quebrar integridade de quartos ocupados.
-- Factory Pattern usado para criar instâncias de quartos.
+- Apenas admin/receptionist gerenciam quartos (JWT).
+- Integridade de quartos ocupados preservada.
+- Factory Pattern para criação de instâncias.
 
 </details>
 
 <details>
 <summary><b>UC05 — Reservas</b></summary>
 
-**Ator Primário:** Recepcionista/Admin
+**Ator Primário:** Receptionist/Admin
 
 **Fluxo Principal:**
-1. Recepcionista/Admin acessa endpoint `/reservations` autenticado.
-2. Informa dados da reserva (hóspede, quarto, datas).
+1. Acessa `/reservations` autenticado.
+2. Informa dados (hóspede, quarto, datas).
 3. Sistema valida:
-  - Campos obrigatórios, tipos e IDs positivos.
+  - Campos obrigatórios e tipos.
   - Datas válidas (checkIn < checkOut).
   - Disponibilidade do quarto (sem overbooking).
   - guestId pode ser diferente de userId (reserva para terceiros).
-4. Recepcionista/Admin recebe confirmação.
+4. Confirmação.
 
 **Fluxos Alternativos:**
-- 3a. Quarto indisponível: sistema retorna erro 400.
-- 2a. Dados inválidos: sistema retorna erro 400.
-- 5a. Cancelamento após check-in ou check-out: sistema retorna erro 400.
-- 5b. Usuário comum tentando criar/cancelar reserva: sistema retorna erro 403.
+- 3a. Quarto indisponível: erro 400.
+- 2a. Dados inválidos: erro 400.
+- 5a. Cancelamento após check-in/out: erro 400.
+- 5b. Usuário comum tentando criar/cancelar: erro 403.
 
 **Regras de Negócio:**
-- Apenas recepcionista/admin podem criar, cancelar ou alterar reservas (JWT obrigatório).
-- Não é permitido reservar quarto já ocupado (overbooking).
-- Cancelamento só permitido antes do check-in.
-- Não é permitido cancelar reserva já finalizada.
-- guestId ≠ userId é permitido (reserva para terceiros).
-- Eventos publicados para integração.
+- Apenas receptionist/admin criam/cancelam/alteram (JWT).
+- Sem overbooking.
+- Cancelamento só antes do check-in.
+- Não cancelar reserva finalizada.
+- guestId ≠ userId permitido.
+- Eventos publicados.
 
 </details>
 
 <details>
 <summary><b>UC06 — Pagamento de Reserva</b></summary>
 
-**Ator Primário:** Recepcionista/Admin
+**Ator Primário:** Receptionist/Admin
 
 **Fluxo Principal:**
-1. Recepcionista/Admin acessa endpoint `/payments` autenticado.
+1. Acessa `/payments` autenticado.
 2. Informa reserva e dados do pagamento.
 3. Sistema valida:
   - Reserva existe e está confirmada.
   - Valor positivo.
   - Método aceito (cartao, pix, dinheiro).
   - Não pode pagar reserva já paga.
-4. Sistema processa pagamento usando Strategy Pattern para descontos.
-5. Sistema publica evento de pagamento no RabbitMQ.
-6. Recepcionista/Admin recebe confirmação.
+4. Aplica Strategy de descontos.
+5. Publica evento.
+6. Confirmação.
 
 **Fluxos Alternativos:**
-- 2a. Pagamento duplicado: sistema retorna erro 400.
-- 2b. Reserva não confirmada: sistema rejeita pagamento.
-- 2c. Valor negativo ou zero: sistema retorna erro 400.
-- 2d. Método inválido: sistema retorna erro 400.
+- 2a. Pagamento duplicado: erro 400.
+- 2b. Reserva não confirmada: rejeita.
+- 2c. Valor inválido: erro 400.
+- 2d. Método inválido: erro 400.
 
 **Regras de Negócio:**
-- Apenas reservas confirmadas podem ser pagas.
-- Pagamento só pode ser feito uma vez por reserva.
-- Strategy Pattern usado para aplicar descontos por método.
-- Integração com gateway de pagamento pode ser simulada.
-- Eventos publicados para integração.
+- Só reservas confirmadas podem ser pagas.
+- Apenas um pagamento por reserva.
+- Strategy Pattern para descontos.
+- Integração com gateway pode ser simulada.
+- Eventos publicados.
 
 </details>
 
 <details>
 <summary><b>UC07 — Check-in e Check-out</b></summary>
 
-**Ator Primário:** Recepcionista/Admin
+**Ator Primário:** Receptionist/Admin
 
 **Fluxo Principal:**
-1. Recepcionista/Admin acessa endpoint `/reservations/checkin` ou `/reservations/checkout` autenticado.
+1. Acessa `/reservations/checkin` ou `/reservations/checkout` autenticado.
 2. Informa reserva.
-3. Sistema valida status:
-  - Check-in só permitido se reserva paga.
-  - Check-out só permitido após check-in.
-  - Não pode fazer check-in/out em reserva cancelada ou finalizada.
-4. Sistema publica eventos de check-in/out no RabbitMQ.
-5. Recepcionista/Admin recebe confirmação.
+3. Validações:
+  - Check-in somente se reserva paga.
+  - Check-out somente após check-in.
+  - Não operar em reserva cancelada/finalizada.
+4. Publica eventos.
+5. Confirmação.
 
 **Fluxos Alternativos:**
-- 2a. Tentativa de check-in sem pagamento: sistema retorna erro 400.
-- 2b. Tentativa de check-out sem check-in: sistema retorna erro 400.
-- 2c. Usuário comum tentando check-in/check-out: sistema retorna erro 403.
+- 2a. Check-in sem pagamento: erro 400.
+- 2b. Check-out sem check-in: erro 400.
+- 2c. Usuário comum tentando operar: erro 403.
 
 **Regras de Negócio:**
-- Apenas reservas pagas podem realizar check-in.
-- Check-out só pode ser feito após check-in.
-- Apenas recepcionista/admin podem operar check-in/out (JWT obrigatório).
-- Eventos publicados para integração.
+- Check-in apenas para reservas pagas.
+- Check-out após check-in.
+- Só receptionist/admin operam (JWT).
+- Eventos publicados.
 
 </details>
 
 <details>
 <summary><b>UC08 — Relatórios e Auditoria</b></summary>
 
-**Ator Primário:** Admin/Recepcionista
+**Ator Primário:** Admin/Receptionist
 
 **Fluxo Principal:**
-1. Admin/Recepcionista acessa endpoint `/reports` autenticado.
+1. Acessa `/reports` autenticado.
 2. Solicita relatório de reservas, pagamentos, ocupação ou faturamento.
-3. Sistema gera relatório consolidado, filtrando por período, status, etc.
-4. Usuário recebe relatório.
+3. Sistema gera relatório filtrado (período, status, etc.).
+4. Recebe relatório.
 
 **Fluxos Alternativos:**
-- 2a. User comum tentando acessar relatórios: sistema retorna erro 403.
-- 2b. Parâmetros inválidos: sistema retorna erro 400.
+- 2a. Usuário comum tentando acessar: erro 403.
+- 2b. Parâmetros inválidos: erro 400.
 
 **Regras de Negócio:**
-- Apenas admin/recepcionista podem acessar relatórios (JWT obrigatório).
-- Relatórios devem refletir status real dos dados.
+- Apenas admin/receptionist acessam (JWT).
 - Faturamento considera apenas reservas pagas e finalizadas.
 
 </details>
 
+## ✅ Boas práticas e decisões
+
+- Roles padronizadas em EN: admin, receptionist, guest (não traduzir no payload)
+- Mensagens e erros em pt-BR nos endpoints
+- Sem segredos em Dockerfiles; segredos via variáveis de ambiente
+- .gitignore/.dockerignore reforçados; não commitar `.env.local` nem pastas de cobertura
+- Health checks HTTP em todos os serviços; `/health` inclui status do Mongo e origem dos segredos em não-prod
+- Persistência real no MongoDB (user e room) via Mongoose; em DEV requer Atlas
+
+## 🩺 Health e observabilidade
+
+- GET `/health` em cada serviço retorna JSON com status, uptime e (em dev) origem das variáveis de segredo.
+- RabbitMQ console: http://localhost:15672 (guest/guest).
+
+## 🛠️ Solução de problemas (FAQ rápido)
+
+- Erro de conexão com Mongo: verifique `MONGODB_URI` no `.env.local` (Atlas) e liberação de IPs no cluster.
+- 401/403 em rotas protegidas: confira `Authorization: Bearer <token>` e a role do usuário.
+- Porta em uso: ajuste as portas no `docker-compose.yml` ou pare processos locais.
+- RabbitMQ indisponível: aguarde o health check ficar verde; veja logs do serviço.
+
 ## 🤝 Contribuição
 
-Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou pull requests.
-
+Contribuições são bem-vindas! Abra issues ou pull requests. Antes de enviar, rode os testes do serviço impactado.
