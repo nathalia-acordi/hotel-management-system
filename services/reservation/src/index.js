@@ -16,6 +16,9 @@ export function createApp(middlewares = {}) {
   app.get('/', (req, res) => {
     res.send('Reservation Service running');
   });
+  app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', service: 'reservation', uptime: process.uptime() });
+  });
   // Injeção de dependência do repositório (DIP)
   const reservationRepository = new InMemoryReservationRepository();
   global.__reservationRepository__ = reservationRepository;

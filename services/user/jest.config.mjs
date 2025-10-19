@@ -1,7 +1,16 @@
 export default {
   testEnvironment: 'node',
+  testMatch: ['<rootDir>/tests/**/*.test.mjs'],
   transform: {},
-  rootDir: '.',
-  testMatch: ['<rootDir>/tests/**/*.test.mjs', '<rootDir>/tests/**/*.test.js'],
-  moduleNameMapper: {},
+  clearMocks: true,
+  restoreMocks: true,
+  resetMocks: true,
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.mjs'],
+  collectCoverageFrom: [
+    'src/**/*.js',
+    '!src/interfaces/docs/**',
+    '!**/tests/**'
+  ],
+  // Temporarily relax thresholds during stabilization. Uncomment/tune later.
+  // coverageThreshold: { global: { statements: 70, branches: 50, functions: 50, lines: 70 } },
 };

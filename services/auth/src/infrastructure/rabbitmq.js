@@ -1,4 +1,3 @@
-// Infrastructure Layer: RabbitMQ publisher (Singleton - GoF)
 import amqplib from 'amqplib';
 
 

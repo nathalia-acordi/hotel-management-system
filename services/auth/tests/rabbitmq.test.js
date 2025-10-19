@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { jest, describe } from '@jest/globals';
 import amqplib from 'amqplib';
 import * as rabbitmq from '../src/infrastructure/rabbitmq.js';
 
@@ -67,3 +67,7 @@ describe('infrastructure/rabbitmq', () => {
     });
   });
 });
+
+// Integration tests moved to tests/integration/rabbitmq.integration.test.mjs
+
+// duplicate unit tests removed (covered above)

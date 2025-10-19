@@ -1,9 +1,10 @@
-FROM node:20.19.5-alpine
-WORKDIR /usr/src/app
+FROM node:20-alpine
+WORKDIR /app
 COPY package*.json ./
-RUN npm install --production && npm install jsonwebtoken
+ARG INCLUDE_DEV=false
+RUN if [ "$INCLUDE_DEV" = "true" ]; then npm ci; else npm ci --omit=dev; fi
 COPY . .
 EXPOSE 3000
-# Permite rodar testes facilmente
-ARG TEST=false
-CMD if [ "$TEST" = "true" ]; then npm test; else node src/interfaces/server.js; fi
+RUN chmod +x docker-entrypoint.sh
+ENTRYPOINT ["/bin/sh", "-c", "./docker-entrypoint.sh \"$@\"", "--"]
+CMD ["node", "src/interfaces/server.js"]

@@ -1,63 +1,52 @@
-import axios from 'axios';
-import jwt from 'jsonwebtoken';
-import { publishLoginEvent, createLoginEvent } from '../infrastructure/rabbitmq.js';
+import Joi from 'joi';
+import { AuthService } from '../application/AuthService.js';
+import { JwtTokenService } from '../infrastructure/JwtTokenService.js';
+import UserReader from '../application/UserReader.js';
+import PasswordHasher from '../infrastructure/passwordHasher.js';
+import { publishLogin } from '../domain/eventService.js';
 
-// authController.js do Auth Service
-// - Integra com User Service para validar credenciais
-// - Gera JWT para autenticação
-// - Publica evento de login no RabbitMQ
-// - Trata erros de rede e autenticação
+const loginSchema = Joi.object({
+  identifier: Joi.string().min(3).max(100).required().messages({
+    'string.base': 'Identifier deve ser uma string',
+    'string.min': 'Identifier deve ter ao menos 3 caracteres',
+    'any.required': 'Identifier é obrigatório'
+  }),
+  password: Joi.string()
+    .min(8)
+    .pattern(/[a-z]/, 'minúscula')
+    .pattern(/[A-Z]/, 'maiúscula')
+    .pattern(/[0-9]/, 'dígito')
+    .required()
+    .messages({
+      'string.min': 'Senha deve conter ao menos 8 caracteres',
+      'any.required': 'Senha é obrigatória'
+    }),
+});
 
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL;
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+// Dependências padrão (podem ser sobrescritas em testes)
+const defaultAuthService = new AuthService({
+  userReader: new UserReader(),
+  tokenService: new JwtTokenService(),
+  passwordHasher: new PasswordHasher(),
+});
 
-export const login = async (req, res) => {
-  const { username, password } = req.body;
-  console.log('[AUTH] Tentando login para:', username);
+export const login = (authService = defaultAuthService) => async (req, res) => {
+  const { error, value } = loginSchema.validate(req.body || {}, { abortEarly: false });
+  if (error) {
+    return res.status(400).json({ erro: 'Dados inválidos', detalhes: error.details.map(d => d.message) });
+  }
+
   try {
-    // Consulta o User Service para validar credenciais
-    console.log('[AUTH] USER_SERVICE_URL:', USER_SERVICE_URL);
-    console.log('[AUTH] Enviando para User Service:', USER_SERVICE_URL + '/validate', { username, password });
-    let response;
-    try {
-      response = await axios.post(`${USER_SERVICE_URL}/validate`, { username, password });
-      console.log('[AUTH] Resposta do User Service:', response.data);
-    } catch (err) {
-      // Log detalhado de erro na comunicação com User Service
-      console.error('[AUTH] Erro ao chamar User Service /validate:', {
-        url: `${USER_SERVICE_URL}/validate`,
-        status: err?.response?.status,
-        data: err?.response?.data,
-        message: err?.message,
-        stack: err?.stack
-      });
-      throw err;
-    }
-    if (response.data && response.data.valid) {
-      // Gera token JWT com id e role
-      const token = jwt.sign({ id: response.data.id, role: response.data.role }, JWT_SECRET, { expiresIn: '1h' });
-      // Publica evento de login no RabbitMQ
-      const event = createLoginEvent(response.data.id, username);
-      try {
-        await publishLoginEvent(event);
-      } catch (err) {
-        // Erro ao publicar evento não impede login
-        console.error('[AUTH] Erro ao publicar evento no RabbitMQ:', err.message);
-      }
-      console.log('[AUTH] Login bem-sucedido, token gerado.');
-      return res.json({ token });
-    }
-    // Credenciais inválidas
-    console.log('[AUTH] Credenciais inválidas segundo User Service.');
-    return res.status(401).json({ error: 'Credenciais inválidas' });
+  const result = await authService.login(value.identifier, value.password);
+  if (!result) return res.status(401).json({ erro: 'Credenciais inválidas' });
+
+  // Dispara evento de login sem aguardar retorno (não bloqueante)
+    try { await publishLogin(result.user.id, result.user.username); } catch {}
+    return res.status(200).json({ mensagem: 'Login realizado com sucesso', token: result.token, usuario: result.user });
   } catch (err) {
-    // Erro de autenticação ou rede
-    console.error('[AUTH] Erro ao autenticar:', {
-      status: err?.response?.status,
-      data: err?.response?.data,
-      message: err?.message,
-      stack: err?.stack
-    });
-    return res.status(401).json({ error: 'Credenciais inválidas' });
+    if (err.name === 'ValidationError') return res.status(400).json({ erro: err.message });
+    if (err.status === 401) return res.status(401).json({ erro: 'Credenciais inválidas' });
+    console.error('[AUTH] Erro inesperado ao autenticar:', err.message);
+    return res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };

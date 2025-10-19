@@ -1,6 +1,10 @@
 import express from 'express';
 import { register, validate, deleteUser } from './userController.js';
 import { UserRepositoryImpl } from '../infrastructure/UserRepository.js';
+import { AuthService } from '../application/AuthService.js';
+import { register as registerHandler } from './userController.js';
+
+const authService = new AuthService();
 
 export function createApp() {
   const app = express();
@@ -10,21 +14,13 @@ export function createApp() {
 }
 
 export function configureRoutes(app) {
-  app.get('/health', (req, res) => res.status(200).json({ status: 'ok', service: 'user' }));
+  // Health é tratado em server.js com detalhes enriquecidos
 
-  // Auto-cadastro (permitido apenas para Hóspede)
-  app.post('/self-register', async (req, res, next) => {
-    try {
-      const authResponse = await authService.validateRole(req.headers.authorization, ['guest']);
-      if (!authResponse.isValid) {
-        return res.status(authResponse.status).json({ error: authResponse.message });
-      }
-      next();
-    } catch (error) {
-      console.error('[AUTH SERVICE] Erro ao validar papel:', error);
-      return res.status(500).json({ error: 'Erro interno ao validar papel' });
-    }
-  }, register);
+  // Auto-cadastro (público) força role='guest'
+  app.post('/self-register', (req, res, next) => {
+    req.body = { ...req.body, role: 'guest' };
+    next();
+  }, registerHandler);
 
   // Cadastrar hóspede (permitido para Admin e Recepcionista)
   app.post('/register', async (req, res, next) => {
@@ -38,13 +34,22 @@ export function configureRoutes(app) {
       console.error('[AUTH SERVICE] Erro ao validar papel:', error);
       return res.status(500).json({ error: 'Erro interno ao validar papel' });
     }
-  }, register);
+  }, registerHandler);
 
   // Validar credenciais (sem restrição de acesso)
   app.post('/validate', validate);
 
   // Listar usuários (permitido para Admin e Recepcionista)
   app.get('/users', async (req, res) => {
+    try {
+      const authService = new AuthService();
+      const authResponse = await authService.validateRole(req.headers.authorization, ['admin', 'receptionist']);
+      if (!authResponse.isValid) {
+        return res.status(authResponse.status).json({ error: authResponse.message || 'Unauthorized' });
+      }
+    } catch (error) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     try {
       const repo = new UserRepositoryImpl();
       const users = (await repo.getAll()).map(user => {

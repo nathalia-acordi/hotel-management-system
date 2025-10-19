@@ -1,4 +1,7 @@
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+function readFromFileVar(varName){const p=process.env[varName];if(!p) return null; try{return fs.readFileSync(p,'utf8').trim();}catch{return null}}
+function getSecret(key,fileKey){return process.env[key] || readFromFileVar(fileKey)}
 
 export function authenticateJWT(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -7,7 +10,7 @@ export function authenticateJWT(req, res, next) {
   }
   const token = authHeader.split(' ')[1];
   try {
-    const secret = process.env.JWT_SECRET || 'segredo_super_secreto';
+  const secret = getSecret('JWT_SECRET','JWT_SECRET_FILE') || 'segredo_super_secreto';
     const decoded = jwt.verify(token, secret);
     req.user = decoded;
     next();

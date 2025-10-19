@@ -3,7 +3,6 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-CMD ["npm", "run", "start"]
 
 # Permite rodar testes facilmente
 ARG TEST=false

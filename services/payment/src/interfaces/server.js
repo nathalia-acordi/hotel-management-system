@@ -8,7 +8,11 @@ export function createApp(paymentService) {
   app.use(express.json());
   const controller = createPaymentController(paymentService);
 
+  // Health endpoints
   app.get('/', controller.health);
+  app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', service: 'payment', uptime: process.uptime() });
+  });
   app.get('/payments', controller.listPayments);
   app.post('/payments', controller.createPayment);
 

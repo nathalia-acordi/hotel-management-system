@@ -1,10 +1,10 @@
-FROM node:20-alpine
+ARG BASE_IMAGE=node:20-alpine
+FROM ${BASE_IMAGE}
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+ARG INCLUDE_DEV=false
+RUN if [ "$INCLUDE_DEV" = "true" ]; then npm ci; else npm ci --omit=dev; fi
 COPY . .
-CMD ["npm", "run", "start"]
-
-# Permite rodar testes facilmente
-ARG TEST=false
-CMD if [ "$TEST" = "true" ]; then npm test; else npm run start; fi
+RUN chmod +x docker-entrypoint.sh
+ENTRYPOINT ["/bin/sh", "-c", "./docker-entrypoint.sh \"$@\"", "--"]
+CMD ["node", "src/index.mjs"]

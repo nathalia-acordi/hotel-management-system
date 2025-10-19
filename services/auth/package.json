@@ -5,19 +5,28 @@
   "type": "module",
   "scripts": {
     "start": "node src/interfaces/server.js",
-  "test:integration": "set USER_URL=http://localhost:3005&& set AUTH_URL=http://localhost:3001&& jest tests/integrationAuthUser.test.js",
-  "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.mjs --coverage"
+    "test": "cross-env NODE_ENV=test node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.mjs --runInBand --detectOpenHandles",
+    "test:unit": "cross-env NODE_ENV=test JEST_INTEGRATION=0 npm run test",
+    "test:integration": "cross-env NODE_ENV=test JEST_INTEGRATION=1 node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.mjs --runInBand --detectOpenHandles",
+    "test:watch": "cross-env NODE_ENV=test node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.mjs --watch",
+    "coverage": "cross-env NODE_ENV=test node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.mjs --coverage"
   },
   "dependencies": {
     "amqplib": "^0.10.9",
+    "auth-service": "file:",
     "axios": "^1.12.2",
+    "bcryptjs": "^2.4.3",
     "body-parser": "^2.2.0",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2"
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.19.1"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "jest": "^29.7.0",
-    "supertest": "^6.3.3"
+    "supertest": "^6.3.4"
   },
   "description": "",
   "directories": {

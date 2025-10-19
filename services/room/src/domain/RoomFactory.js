@@ -1,6 +1,3 @@
-
-// RoomFactory — Implementação do padrão Factory (GoF)
-// Responsável por criar instâncias de Room de acordo com o tipo, encapsulando a lógica de construção e regras de negócio.
 import { Room } from '../models/Room.js';
 
 export class RoomFactory {

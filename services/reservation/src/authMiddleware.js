@@ -1,4 +1,7 @@
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+function readFromFileVar(varName){const p=process.env[varName];if(!p) return null; try{return fs.readFileSync(p,'utf8').trim();}catch{return null}}
+function getSecret(key,fileKey){return process.env[key] || readFromFileVar(fileKey)}
 
 export function authenticateJWT(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -10,7 +13,7 @@ export function authenticateJWT(req, res, next) {
     return res.status(401).json({ error: 'Token não fornecido' });
   }
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecret');
+  const decoded = jwt.verify(token, getSecret('JWT_SECRET','JWT_SECRET_FILE') || 'supersecret');
     req.user = decoded;
     next();
   } catch (err) {
@@ -25,8 +28,8 @@ export function isAdmin(req, res, next) {
   return res.status(403).json({ error: 'Acesso restrito a administradores' });
 }
 
-export function isRecepcionista(req, res, next) {
-  if (req.user && (req.user.role === 'admin' || req.user.role === 'recepcionista')) {
+export function isReceptionist(req, res, next) {
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'receptionist')) {
     return next();
   }
   return res.status(403).json({ error: 'Acesso restrito a recepcionistas ou administradores' });

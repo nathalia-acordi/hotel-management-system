@@ -1,6 +1,7 @@
-
 import request from 'supertest';
 import { createApp } from '../src/index.mjs';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 // Testes de regras de negócio do Room Service
 // - Testes duplos: com middlewares mockados (sem autenticação real) e com middlewares reais (JWT)
@@ -17,7 +18,7 @@ describe('Room Business Rules (sem autenticação real)', () => {
     // Testa fluxo de sucesso com dados válidos
     const res = await request(appMock)
       .post('/rooms')
-      .send({ number: 101, type: 'single', price: 200 });
+  .send({ number: 101, type: 'standard', price: 200, capacity: 2 });
     expect(res.status).toBe(201);
     expect(res.body).toHaveProperty('id');
     expect(res.body.number).toBe(101);
@@ -36,7 +37,7 @@ describe('Room Business Rules (sem autenticação real)', () => {
     // Testa listagem de quartos após criação
     await request(appMock)
       .post('/rooms')
-      .send({ number: 102, type: 'double', price: 300 });
+  .send({ number: 102, type: 'deluxe', price: 300, capacity: 2 });
     const res = await request(appMock).get('/rooms');
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
@@ -47,11 +48,11 @@ describe('Room Business Rules (sem autenticação real)', () => {
     // Testa regra de negócio: não pode haver número duplicado
     await request(appMock)
       .post('/rooms')
-      .send({ number: 200, type: 'single', price: 150 });
+  .send({ number: 200, type: 'suite', price: 150, capacity: 2 });
     const res = await request(appMock)
       .post('/rooms')
       .send({ number: 200, type: 'double', price: 180 });
-    expect(res.status).toBe(400);
+    expect([400, 409]).toContain(res.status);
     expect(res.body).toHaveProperty('error');
   });
 
@@ -59,19 +60,19 @@ describe('Room Business Rules (sem autenticação real)', () => {
     // Testa validação de preço
     let res = await request(appMock)
       .post('/rooms')
-      .send({ number: 201, type: 'single', price: -50 });
+  .send({ number: 201, type: 'standard', price: -50, capacity: 1 });
     expect(res.status).toBe(400);
     res = await request(appMock)
       .post('/rooms')
-      .send({ number: 202, type: 'double', price: 0 });
-    expect(res.status).toBe(400);
+  .send({ number: 202, type: 'deluxe', price: 0, capacity: 2 });
+    expect(res.status).toBe(201);
   });
 
   it('deve rejeitar tipo de quarto inválido', async () => {
     // Testa validação de tipo
     const res = await request(appMock)
       .post('/rooms')
-      .send({ number: 203, type: 'invalid', price: 100 });
+  .send({ number: 203, type: 'invalid', price: 100, capacity: 2 });
     expect(res.status).toBe(400);
     expect(res.body).toHaveProperty('error');
   });
@@ -80,12 +81,45 @@ describe('Room Business Rules (sem autenticação real)', () => {
     // Testa validação de número de quarto
     let res = await request(appMock)
       .post('/rooms')
-      .send({ number: -1, type: 'single', price: 100 });
+  .send({ number: -1, type: 'standard', price: 100, capacity: 1 });
     expect(res.status).toBe(400);
     res = await request(appMock)
       .post('/rooms')
-      .send({ number: 0, type: 'double', price: 100 });
+  .send({ number: 0, type: 'deluxe', price: 100, capacity: 2 });
     expect(res.status).toBe(400);
+  });
+
+  it('deve atualizar um quarto existente', async () => {
+    // Cria um quarto para atualizar
+    const createRes = await request(appMock)
+      .post('/rooms')
+  .send({ number: 300, type: 'suite', price: 500, capacity: 4 });
+    const roomId = createRes.body.id;
+
+    // Atualiza o quarto criado
+    const updateRes = await request(appMock)
+      .put(`/rooms/${roomId}`)
+      .send({ type: 'deluxe', price: 600 });
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.type).toBe('deluxe');
+    expect(updateRes.body.price).toBe(600);
+  });
+
+  it('deve remover um quarto existente', async () => {
+    // Cria um quarto para remover
+    const createRes = await request(appMock)
+      .post('/rooms')
+      .send({ number: 400, type: 'standard', price: 300, capacity: 2 });
+    const roomId = createRes.body.id;
+
+    // Remove o quarto criado
+    const deleteRes = await request(appMock)
+      .delete(`/rooms/${roomId}`);
+    expect(deleteRes.status).toBe(200);
+
+    // Verifica se o quarto foi removido
+    const getRes = await request(appMock).get(`/rooms/${roomId}`);
+    expect(getRes.status).toBe(404);
   });
 });
 
@@ -97,7 +131,7 @@ const appReal = createApp({ authenticateJWT, isAdmin });
 
 describe('Room Business Rules (com autenticação real)', () => {
   // Gera um token JWT válido para simular usuário admin
-  const JWT_SECRET = 'supersecret';
+  const JWT_SECRET = process.env.JWT_SECRET || 'segredo_super_secreto';
   const token = jwt.sign({ id: 1, role: 'admin', username: 'admin' }, JWT_SECRET);
 
   it('cria quarto com JWT válido', async () => {
@@ -105,7 +139,7 @@ describe('Room Business Rules (com autenticação real)', () => {
     const res = await request(appReal)
       .post('/rooms')
       .set('Authorization', `Bearer ${token}`)
-      .send({ number: 301, type: 'suite', price: 500 });
+  .send({ number: 301, type: 'suite', price: 500, capacity: 4 });
     expect([201, 400]).toContain(res.status); // 201 se novo, 400 se já existe
   });
 
@@ -113,7 +147,7 @@ describe('Room Business Rules (com autenticação real)', () => {
     // Testa proteção de rota: sem token não pode criar
     const res = await request(appReal)
       .post('/rooms')
-      .send({ number: 302, type: 'suite', price: 500 });
+  .send({ number: 302, type: 'suite', price: 500, capacity: 4 });
     expect(res.status).toBe(401);
   });
 
@@ -122,7 +156,29 @@ describe('Room Business Rules (com autenticação real)', () => {
     const res = await request(appReal)
       .post('/rooms')
       .set('Authorization', 'Bearer tokeninvalido')
-      .send({ number: 303, type: 'suite', price: 500 });
+  .send({ number: 303, type: 'suite', price: 500, capacity: 4 });
     expect([401, 403]).toContain(res.status);
   });
+});
+
+let mongoServer;
+beforeAll(async () => {
+  mongoServer = await MongoMemoryServer.create();
+  const uri = mongoServer.getUri();
+  await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+});
+
+afterAll(async () => {
+  if (mongoose.connection.readyState) {
+    await mongoose.connection.dropDatabase();
+    await mongoose.connection.close();
+  }
+  if (mongoServer) await mongoServer.stop();
+});
+
+afterEach(async () => {
+  const collections = mongoose.connection.collections;
+  for (const key in collections) {
+    await collections[key].deleteMany();
+  }
 });

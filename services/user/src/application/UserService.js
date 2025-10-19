@@ -1,98 +1,111 @@
-// Application Layer: UserService (ES Modules)
+// Camada de Aplicação: UserService (ES Modules)
 export class UserService {
-  constructor(userRepository, eventPublisher) {
+  static inProgress = new Set();
+  constructor(userRepository, eventPublisher, passwordHasher) {
     this.userRepository = userRepository;
     this.eventPublisher = eventPublisher;
+    this.passwordHasher = passwordHasher;
   }
 
   async validateUser(username, password) {
     const user = await this.userRepository.findByUsername(username);
-    if (user && user.password === password) {
-      return { valid: true, id: user.id, role: user.role };
+    if (user && (await this.passwordHasher.compare(password, user.password))) {
+      return { valid: true, id: user.id || user._id?.toString(), role: user.role, username: user.username };
     }
     return { valid: false };
   }
 
   async createUser(user) {
-    console.log('[USER SERVICE] Iniciando criação de usuário:', user);
+    console.log('[USER SERVICE] Iniciando criação de usuário:', { ...user, password: '***' });
+  // Validações básicas; a camada de interface deve ter feito a validação detalhada
     if (!user.username || typeof user.username !== 'string' || user.username.trim() === '') {
-      console.error('[USER SERVICE] Username inválido:', user.username);
-      throw new Error('Username inválido');
-    }
-
-    const existingUser = await this.userRepository.findByUsername(user.username);
-    if (existingUser) {
-      console.error('[USER SERVICE] Usuário já existe:', user.username);
-      throw new Error('Usuário já existe');
-    }
-
-    if (!user.password || user.password.length < 6) {
-      console.error('[USER SERVICE] Senha fraca:', user.password);
-      throw new Error('Senha fraca');
-    }
-
-    const lockKey = `lock:${user.username}`;
-    if (global[lockKey]) {
-      console.error('[USER SERVICE] Lock detectado para usuário:', user.username);
-      throw new Error('Usuário já existe');
-    }
-    global[lockKey] = true;
-
-    try {
-      console.log('[USER SERVICE] Salvando usuário no repositório:', user);
-      const savedUser = await this.userRepository.save(user);
-      console.log('[USER SERVICE] Usuário salvo com sucesso:', savedUser);
-
-      try {
-        console.log('[USER SERVICE] Publicando evento user.created para:', savedUser);
-        await this.eventPublisher('user.created', { id: savedUser.id, username: savedUser.username, role: savedUser.role });
-      } catch (err) {
-        console.error('[USER SERVICE] Erro ao publicar evento user.created:', err);
-      }
-
-      return savedUser;
-    } finally {
-      console.log('[USER SERVICE] Liberando lock para usuário:', user.username);
-      delete global[lockKey];
-    }
-  }
-
-  async deleteUser(username) {
-    console.log('[USER SERVICE] Iniciando deleção de usuário:', username);
-    try {
-      const deleted = await this.userRepository.deleteByUsername(username);
-      if (deleted) {
-        console.log('[USER SERVICE] Usuário deletado com sucesso:', username);
-        return true;
-      } else {
-        console.warn('[USER SERVICE] Usuário não encontrado para deleção:', username);
-        return false;
-      }
-    } catch (err) {
-      console.error('[USER SERVICE] Erro ao deletar usuário:', {
-        message: err.message,
-        stack: err.stack,
-      });
+      const err = new Error('Username inválido');
+      err.httpStatus = 400;
       throw err;
     }
+    if (!user.email || !/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(user.email)) {
+      const err = new Error('Email inválido');
+      err.httpStatus = 400;
+      throw err;
+    }
+    if (!user.document || typeof user.document !== 'string') {
+      const err = new Error('Documento inválido');
+      err.httpStatus = 400;
+      throw err;
+    }
+    if (!user.phone || typeof user.phone !== 'string') {
+      const err = new Error('Telefone inválido');
+      err.httpStatus = 400;
+      throw err;
+    }
+    if (!user.password || user.password.length < 6) {
+      const err = new Error('Senha fraca');
+      err.httpStatus = 400;
+      throw err;
+    }
+
+  // Proteção contra concorrência e pré-checagem de duplicidade
+    const key = user.username.trim();
+    if (UserService.inProgress.has(key)) {
+      const err = new Error('Usuário já existe');
+      err.httpStatus = 409;
+      throw err;
+    }
+    UserService.inProgress.add(key);
+
+    try {
+      const existing = await this.userRepository.findByUsername(user.username);
+      if (existing) {
+        const err = new Error('Usuário já existe');
+        err.httpStatus = 409;
+        throw err;
+      }
+      const hashed = await this.passwordHasher.hash(user.password);
+      const toSave = { ...user, password: hashed, role: user.role || 'guest' };
+      console.log('[USER SERVICE] Salvando usuário no repositório:', { ...toSave, password: '***' });
+      const savedUser = await this.userRepository.save(toSave);
+
+      try {
+        await this.eventPublisher('user.created', { id: savedUser.id || savedUser._id?.toString(), username: savedUser.username, role: savedUser.role });
+      } catch (err) {
+        console.error('[USER SERVICE] Erro ao publicar evento user.created:', err?.message || err);
+      }
+      return savedUser;
+    } catch (error) {
+      if (error.httpStatus === 409 || error?.code === 11000) {
+        const err = new Error('Conflito: usuário já existe');
+        err.httpStatus = 409;
+        throw err;
+      }
+      throw error;
+    } finally {
+      UserService.inProgress.delete(key);
+    }
   }
 
+  // Deleta usuário por username, retornando booleano
+  async deleteUser(username) {
+    if (!username || typeof username !== 'string' || username.trim() === '') {
+      const err = new Error('Username inválido');
+      err.httpStatus = 400;
+      throw err;
+    }
+    return await this.userRepository.deleteByUsername(username);
+  }
+
+  // Utilitário estático para validar CPF
   static isValidCPF(cpf) {
-    cpf = (cpf || '').replace(/\D/g, '');
-    if (!cpf || cpf.length !== 11 || /^([0-9])\1+$/.test(cpf)) return false;
-    let sum = 0,
-      rest;
-    for (let i = 1; i <= 9; i++)
-      sum += parseInt(cpf.substring(i - 1, i)) * (11 - i);
-    rest = (sum * 10) % 11;
-    if (rest === 10 || rest === 11) rest = 0;
-    if (rest !== parseInt(cpf.substring(9, 10))) return false;
-    sum = 0;
-    for (let i = 1; i <= 10; i++)
-      sum += parseInt(cpf.substring(i - 1, i)) * (12 - i);
-    rest = (sum * 10) % 11;
-    if (rest === 10 || rest === 11) rest = 0;
-    if (rest !== parseInt(cpf.substring(10, 11))) return false;
-    return true;
+    if (!cpf || typeof cpf !== 'string') return false;
+    const digits = cpf.replace(/\D/g, '');
+    if (digits.length !== 11 || /^([0-9])\1{10}$/.test(digits)) return false;
+    const calcCheck = (base) => {
+      let sum = 0;
+      for (let i = 0; i < base.length; i++) sum += parseInt(base[i], 10) * (base.length + 1 - i);
+      const mod = (sum * 10) % 11;
+      return mod === 10 ? 0 : mod;
+    };
+    const d1 = calcCheck(digits.slice(0, 9));
+    const d2 = calcCheck(digits.slice(0, 9) + d1);
+    return d1 === parseInt(digits[9], 10) && d2 === parseInt(digits[10], 10);
   }
 }

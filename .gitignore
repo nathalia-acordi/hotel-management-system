@@ -1,25 +1,52 @@
+# Ambiente
+.env
+.env.local
+.env.*
+.envrc
+.secrets/
+
 # Node modules
 node_modules/
+
 # Logs
 logs/
 *.log
 npm-debug.log*
+pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-# Ambiente
-.env
-.env.*
+lerna-debug.log*
+
 # Cobertura de testes
 coverage/
-# Arquivos temporários
+.nyc_output/
+
+# Caches e artefatos temporários
 *.tmp
 *.swp
+*.swo
+*~
+.cache/
+.eslintcache
+
+# Sistema/OS
 .DS_Store
+Thumbs.db
+desktop.ini
+
 # Docker
 **/.docker/
-# VSCode
+
+# VSCode (ajuste conforme necessidade)
 .vscode/
-# Build
+
+# Build/Distribuição
 dist/
-# Arquivos de sistema
-Thumbs.db
+build/
+
+# Certificados e chaves privadas (evitar comitar)
+*.pem
+*.key
+*.pfx
+*.p12
+*.crt

@@ -3,13 +3,13 @@ import { InMemoryReservationRepository } from '../infrastructure/InMemoryReserva
 import { ReservationService } from '../application/ReservationService.js';
 import { Guest } from '../domain/Guest.js';
 import { GuestRepository } from '../infrastructure/GuestRepository.js';
-import { authenticateJWT, isAdmin, isRecepcionista } from '../authMiddleware.js';
+import { authenticateJWT, isAdmin, isReceptionist } from '../authMiddleware.js';
 
 // Controller principal do Reservation Service
 // - Expõe endpoints REST para reservas, hóspedes, relatórios e operações críticas
 // - Aplica regras de negócio: sobreposição de reservas, validação de documentos, check-in/out, cancelamento
 // - Permite injeção de middlewares para facilitar testes e mocks
-export default function reservationController({ authenticateJWT: authMW = authenticateJWT, isAdmin: adminMW = isAdmin, isRecepcionista: recepMW = isRecepcionista } = {}) {
+export default function reservationController({ authenticateJWT: authMW = authenticateJWT, isAdmin: adminMW = isAdmin, isRecepcionista: recepMW = isReceptionist } = {}) {
   const router = express.Router();
   // O repositório deve ser injetado pelo ponto de entrada para garantir DIP
   // Aqui, por compatibilidade, instanciaremos se não for fornecido
@@ -99,14 +99,14 @@ export default function reservationController({ authenticateJWT: authMW = authen
   });
 
   // Listar hóspedes
-  router.get('/guests', authenticateJWT, isRecepcionista, (req, res) => {
+  router.get('/guests', authenticateJWT, isReceptionist, (req, res) => {
     console.log('[RESERVATION] GET /guests called');
     console.log('[RESERVATION] Headers:', req.headers);
     res.json(guestRepository.findAll());
   });
 
   // Atualizar status de pagamento da reserva
-  router.patch('/reservations/:id/payment', authenticateJWT, isRecepcionista, (req, res) => {
+  router.patch('/reservations/:id/payment', authenticateJWT, isReceptionist, (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       const { paymentStatus } = req.body;
@@ -121,7 +121,7 @@ export default function reservationController({ authenticateJWT: authMW = authen
   });
 
   // Check-in
-  router.post('/reservations/:id/checkin', authenticateJWT, isRecepcionista, (req, res) => {
+  router.post('/reservations/:id/checkin', authenticateJWT, isReceptionist, (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       const reservation = reservationService.checkIn(id);
@@ -132,7 +132,7 @@ export default function reservationController({ authenticateJWT: authMW = authen
   });
 
   // Check-out
-  router.post('/reservations/:id/checkout', authenticateJWT, isRecepcionista, (req, res) => {
+  router.post('/reservations/:id/checkout', authenticateJWT, isReceptionist, (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       const reservation = reservationService.checkOut(id);
@@ -143,7 +143,7 @@ export default function reservationController({ authenticateJWT: authMW = authen
   });
 
   // Cancelamento de reserva
-  router.post('/reservations/:id/cancel', authenticateJWT, isRecepcionista, (req, res) => {
+  router.post('/reservations/:id/cancel', authenticateJWT, isReceptionist, (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       const reservation = reservationService.cancelReservation(id);
@@ -155,7 +155,7 @@ export default function reservationController({ authenticateJWT: authMW = authen
 
   // Criação de reserva
   // Aplica regra de sobreposição de datas/quarto
-  router.post('/reservations', authenticateJWT, isRecepcionista, (req, res) => {
+  router.post('/reservations', authenticateJWT, isReceptionist, (req, res) => {
     try {
       console.log('POST /reservations body:', req.body);
       const { userId, guestId, roomId, checkIn, checkOut } = req.body;
@@ -171,7 +171,7 @@ export default function reservationController({ authenticateJWT: authMW = authen
   });
 
   // Listar todas as reservas
-  router.get('/reservations', authenticateJWT, isRecepcionista, (req, res) => {
+  router.get('/reservations', authenticateJWT, isReceptionist, (req, res) => {
     res.json(reservationService.getAllReservations());
   });
 

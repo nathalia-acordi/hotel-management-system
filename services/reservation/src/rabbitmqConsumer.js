@@ -1,6 +1,6 @@
 import amqp from 'amqplib';
 
-const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost';
+const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://rabbitmq:5672';
 const QUEUE = 'user.created';
 
 export async function startUserCreatedConsumer() {
