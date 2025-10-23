@@ -78,9 +78,6 @@ export default function reservationController({ authenticateJWT: authMW = authen
 
   // Cadastro de hóspede com validação de documento
   router.post('/guests', authMW, recepMW, (req, res) => {
-    console.log('[RESERVATION] POST /guests called');
-    console.log('[RESERVATION] Headers:', req.headers);
-    console.log('[RESERVATION] Body:', req.body);
     try {
       const { name, document, email, phone } = req.body;
       if (!name || !document) {
@@ -100,8 +97,6 @@ export default function reservationController({ authenticateJWT: authMW = authen
 
   // Listar hóspedes
   router.get('/guests', authenticateJWT, isReceptionist, (req, res) => {
-    console.log('[RESERVATION] GET /guests called');
-    console.log('[RESERVATION] Headers:', req.headers);
     res.json(guestRepository.findAll());
   });
 
