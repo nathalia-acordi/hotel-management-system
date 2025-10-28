@@ -16,8 +16,17 @@ export function createApp(middlewares = {}) {
   app.get('/', (req, res) => {
     res.send('Reservation Service running');
   });
-  app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', service: 'reservation', uptime: process.uptime() });
+  app.get('/health', async (req, res) => {
+    // Opcional: status do RabbitMQ
+    let rabbitStatus = 'unknown';
+    if (global.__rabbitmqConnected === true) rabbitStatus = 'connected';
+    if (global.__rabbitmqConnected === false) rabbitStatus = 'disconnected';
+    res.status(200).json({
+      status: 'ok',
+      service: 'reservation',
+      uptime: process.uptime(),
+      rabbitmq: rabbitStatus
+    });
   });
   // Injeção de dependência do repositório (DIP)
   const reservationRepository = new InMemoryReservationRepository();
