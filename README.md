@@ -1,408 +1,555 @@
-
 # 🏨 Hotel Management System
-
-<a href="https://nodejs.org/" target="_blank"><img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js"/></a>
-<a href="https://expressjs.com/" target="_blank"><img src="https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express.js"/></a>
-<a href="https://www.docker.com/" target="_blank"><img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/></a>
-<a href="https://www.rabbitmq.com/" target="_blank"><img src="https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white" alt="RabbitMQ"/></a>
-<a href="https://jestjs.io/" target="_blank"><img src="https://img.shields.io/badge/Jest-C21325?style=for-the-badge&logo=jest&logoColor=white" alt="Jest"/></a>
-<a href="https://github.com/jest-community/supertest" target="_blank"><img src="https://img.shields.io/badge/Supertest-333?style=for-the-badge&logo=jest&logoColor=white" alt="Supertest"/></a>
-<a href="https://axios-http.com/" target="_blank"><img src="https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white" alt="Axios"/></a>
-<a href="https://jwt.io/" target="_blank"><img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" alt="JWT"/></a>
-<a href="https://restfulapi.net/" target="_blank"><img src="https://img.shields.io/badge/REST%20API-02569B?style=for-the-badge&logo=api&logoColor=white" alt="REST API"/></a>
-<a href="https://en.wikipedia.org/wiki/SOLID" target="_blank"><img src="https://img.shields.io/badge/SOLID-ff9800?style=for-the-badge&logoColor=white" alt="SOLID"/></a>
 
 <div align="center">
 
-  <img src="https://img.shields.io/badge/Clean%20Architecture-1976d2?style=for-the-badge&logo=cloudsmith&logoColor=white" alt="Clean Architecture"/>
-  <img src="https://img.shields.io/badge/GoF%20Patterns-f7c873?style=for-the-badge&logoColor=white" alt="GoF Patterns"/>
+[![Node.js](https://img.shields.io/badge/Node.js_20-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB_Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
 
-<br>
-  <br/>
+**Sistema completo de gerenciamento hoteleiro com arquitetura de microsserviços**
 
-  <img src="https://img.shields.io/badge/User%20Tests-95%25-4caf50?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="User Test Coverage"/>
-  <img src="https://img.shields.io/badge/Room%20Tests-83%25-4caf50?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="Room Test Coverage"/>
-  <img src="https://img.shields.io/badge/Payment%20Tests-83%25-4caf50?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="Payment Test Coverage"/>
-  <img src="https://img.shields.io/badge/Reservation%20Tests-56%25-f44336?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="Reservation Test Coverage"/>
+[![Clean Architecture](https://img.shields.io/badge/Clean_Architecture-1976d2?style=flat-square&logo=cloudsmith&logoColor=white)](#)
+[![SOLID](https://img.shields.io/badge/SOLID_Principles-ff9800?style=flat-square)](#)
+[![GoF Patterns](https://img.shields.io/badge/GoF_Patterns-f7c873?style=flat-square)](#)
+
+[Sobre](#-sobre) • [Funcionalidades](#-funcionalidades) • [Arquitetura](#-arquitetura) • [Instalação](#-instalação) • [Uso](#-uso) • [Testes](#-testes)
 
 </div>
 
+---
 
-</div>
+## 🎯 Sobre
 
+Sistema orientado a serviços para **gerenciamento completo de hotel**, possibilitando a gestão de reservas, quartos, hóspedes, recepcionistas e pagamentos através de uma arquitetura moderna de microsserviços.
 
-## ✨ Principais Funcionalidades
+### Principais Diferenciais
 
-- Gestão de hóspedes, recepcionistas e administradores com permissões distintas
-- API Gateway centralizando entrada, autenticação e proxy
-- Cadastro e autenticação de usuários (JWT)
-- Gerenciamento de quartos (criação, edição, remoção, tipos, manutenção)
-- Reservas com validação de disponibilidade, datas e regras de negócio
-- Pagamento de reservas com aplicação de descontos (Strategy Pattern)
-- Check-in e check-out controlados por regras e status
-- Relatórios de ocupação, faturamento e auditoria
-- Comunicação entre microsserviços via REST e eventos assíncronos (RabbitMQ)
-- Arquitetura limpa, SOLID e padrões GoF aplicados
-- Alta cobertura de testes unitários, integração e end-to-end (executáveis via Docker)
+| Característica | Descrição |
+|----------------|-----------|
+| 🏛️ **Clean Architecture** | Arquitetura limpa em todos os microsserviços |
+| 📐 **SOLID** | Princípios SOLID rigorosamente aplicados |
+| 🎨 **Padrões GoF** | 7 padrões implementados (Proxy, Chain, Adapter, Observer, Strategy, Factory, Facade) |
+| 🚪 **API Gateway** | Ponto único de entrada com autenticação JWT |
+| 🔄 **Mensageria** | Comunicação assíncrona via RabbitMQ |
+| 🔐 **Segurança** | Autenticação JWT com controle de roles |
 
-## Estrutura do Projeto
+---
 
-```text
-hotel-management-system/
-├── services/           # Microsserviços (user, auth, room, reservation, payment, gateway)
-├── integration/        # Testes de integração entre microsserviços
-├── docker-compose.yml  # Orquestração dos serviços e mensageria (sem Mongo container)
-└── README.md           # Este guia
+## ✨ Funcionalidades
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+### 👤 Gestão de Usuários
+- Auto-cadastro de hóspedes
+- Cadastro por staff
+- Autenticação JWT
+- Controle de permissões
+- Validação CPF/RG
+
+</td>
+<td width="33%" valign="top">
+
+### 🛏️ Gestão de Quartos
+- CRUD completo
+- Tipos: Single, Double, Suite
+- Status: Available, Occupied, Maintenance
+- Validação de disponibilidade
+- Controle de preços
+
+</td>
+<td width="33%" valign="top">
+
+### 📅 Gestão de Reservas
+- Criar com validação
+- Prevenir overbooking
+- Validar datas
+- Cancelamento
+- Integração com pagamentos
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+### 💰 Pagamentos
+- Cartão, PIX, Dinheiro
+- Strategy Pattern
+- Validação de status
+- Confirmação assíncrona
+- Integração com reservas
+
+</td>
+<td width="33%" valign="top">
+
+### ✅ Check-in/Check-out
+- Check-in para reservas pagas
+- Atualização automática
+- Sincronização via eventos
+- Liberação de quartos
+- Validações de fluxo
+
+</td>
+<td width="33%" valign="top">
+
+### 📊 Relatórios
+- Relatórios de ocupação
+- Relatórios de faturamento
+- Relatórios de auditoria
+- Filtros por período
+- Acesso restrito a staff
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🏗️ Arquitetura
+
+### Visão Geral dos Microsserviços
+
+```mermaid
+graph TB
+    Client["👤 Cliente HTTP<br/>(Browser/Postman)"]
+    Gateway["🚪 API Gateway<br/>:3005<br/>Autenticação JWT + Proxy"]
+    
+    Auth["🔐 Auth Service<br/>:3001<br/>Login & Tokens"]
+    User["👥 User Service<br/>:3000<br/>Gestão de Usuários"]
+    Room["🛏️ Room Service<br/>:3004<br/>Gestão de Quartos"]
+    Reservation["📅 Reservation Service<br/>:3002<br/>Reservas & Check-in/out"]
+    Payment["💳 Payment Service<br/>:3003<br/>Pagamentos & Descontos"]
+    
+    RabbitMQ["🐰 RabbitMQ<br/>:5672 AMQP / :15672 UI<br/>Mensageria Assíncrona"]
+    MongoDB[("💾 MongoDB Atlas<br/>Cloud Database<br/>Persistência")]
+    
+    Client ==> Gateway
+    
+    Gateway --> Auth
+    Gateway --> User
+    Gateway --> Room
+    Gateway --> Reservation
+    Gateway --> Payment
+    
+    Auth -.->|Eventos| RabbitMQ
+    User -.->|Eventos| RabbitMQ
+    Room -.->|Eventos| RabbitMQ
+    Reservation -.->|Eventos| RabbitMQ
+    Payment -.->|Eventos| RabbitMQ
+    
+    RabbitMQ -.->|Consumo| Auth
+    RabbitMQ -.->|Consumo| User
+    RabbitMQ -.->|Consumo| Room
+    RabbitMQ -.->|Consumo| Reservation
+    RabbitMQ -.->|Consumo| Payment
+    
+    Auth -->|Persist| MongoDB
+    User -->|Persist| MongoDB
+    Room -->|Persist| MongoDB
+    Reservation -->|Persist| MongoDB
+    Payment -->|Persist| MongoDB
+    
+    style Client fill:#E3F2FD,stroke:#1976D2,stroke-width:3px,color:#000
+    style Gateway fill:#4CAF50,stroke:#2E7D32,stroke-width:4px,color:#fff,font-size:16px
+    style RabbitMQ fill:#FF6600,stroke:#CC5200,stroke-width:3px,color:#fff,font-size:14px
+    style MongoDB fill:#47A248,stroke:#13AA52,stroke-width:3px,color:#fff,font-size:14px
+    style Auth fill:#9C27B0,stroke:#6A1B9A,stroke-width:2px,color:#fff
+    style User fill:#2196F3,stroke:#1565C0,stroke-width:2px,color:#fff
+    style Room fill:#FF9800,stroke:#E65100,stroke-width:2px,color:#fff
+    style Reservation fill:#00BCD4,stroke:#006064,stroke-width:2px,color:#fff
+    style Payment fill:#F44336,stroke:#B71C1C,stroke-width:2px,color:#fff
 ```
 
-## 🏗️ Microsserviços
+### 📦 Detalhamento dos Microsserviços
 
-| Microsserviço | Função |
-| ------------ | ------ |
-| **gateway** | Entrada única; autenticação e proxy para os microsserviços. |
-| **user** | Gerencia usuários/hóspedes, cadastro, validações (CPF/RG), perfis e integração com Auth. |
-| **reservation** | Controla reservas (datas, disponibilidade), conflitos, cancelamentos; integra com Room/Payment. |
-| **room** | Gerencia quartos, tipos e status (livre/ocupado/manutenção), atendendo o Reservation. |
-| **payment** | Processa pagamentos, aplica descontos (Strategy), valida status e registra transações. |
-| **auth** | Autenticação, geração/validação de JWT, login e integração com User. |
+| Serviço | Porta | Responsabilidade |
+|---------|-------|------------------|
+| **gateway** | 3005 | Ponto único de entrada; autenticação JWT; proxy HTTP |
+| **user** | 3000 | CRUD de usuários; validação CPF/RG; gestão de perfis |
+| **auth** | 3001 | Autenticação; geração/validação JWT; login |
+| **room** | 3004 | CRUD de quartos; tipos e status; disponibilidade |
+| **reservation** | 3002 | CRUD de reservas; check-in/out; validações |
+| **payment** | 3003 | Processamento de pagamentos; descontos |
 
-## 🗂️ Status dos Serviços
+### 🔄 Comunicação Entre Serviços
 
-| Serviço      | Porta Host -> Container | Endpoint Principal         | Status |
-|--------------|--------------------------|----------------------------|--------|
-| gateway      | 3005 -> 3005             | /, /health                 | OK     |
-| user         | 3000 -> 3000             | /users, /register          | OK     |
-| auth         | 3001 -> 3001             | /login, /validate          | OK     |
-| reservation  | 3002 -> 3000             | /reservations              | OK     |
-| payment      | 3003 -> 3003             | /payments                  | OK     |
-| room         | 3004 -> 3004             | /rooms                     | OK     |
-| RabbitMQ     | 5672/15672               | AMQP/HTTP (console)        | OK     |
+| Tipo | Tecnologia | Uso |
+|------|------------|-----|
+| **Síncrona** | REST/HTTP + JSON | Cliente → Gateway → Microsserviços |
+| **Assíncrona** | RabbitMQ (AMQP) | Eventos entre serviços (user.created, payment.completed, etc) |
 
-## 🎯 Permissões por Papel
+### 🎨 Padrões Arquiteturais
 
-| Ação                  | Admin | Receptionist | Guest |
-|-----------------------|:-----:|:------------:|:-----:|
-| Auto-cadastro         | ✗ | ✗ | ✓ |
-| Cadastrar hóspede     | ✓ | ✓ | ✗ |
-| Gerenciar reservas    | ✗ | ✓ | ✗ |
-| Gerenciar quartos     | ✓ | ✓ | ✗ |
-| Consultar relatórios  | ✓ | ✓ | ✗ |
-| Efetuar pagamento     | ✓ | ✓ | ✗ |
-| Check-in/out          | ✓ | ✓ | ✗ |
-| Cancelar reserva      | ✗ | ✓ | ✗ |
+#### Clean Architecture
 
-## 🏛️ Padrões de Arquitetura
-
-- Clean Architecture: separação clara entre camadas (Domain, Application, Infrastructure, Interfaces). Exemplos por serviço.
-- GoF Patterns: Repository, Service, Factory e Strategy. Exemplos reais:
-  - Repository: `services/user/src/infrastructure/UserRepository.js`
-  - Service: `services/reservation/src/application/ReservationService.js`
-  - Factory: `services/room/src/domain/RoomFactory.js`
-  - Strategy: `services/payment/src/domain/strategy/PaymentStrategy.js`
-- SOLID: foco em responsabilidade única e extensibilidade (ex.: novos métodos de pagamento sem alterar o core).
-- Docker: cada microserviço em seu container; orquestração via `docker-compose.yml`.
-- Mensageria: RabbitMQ para eventos e comunicação assíncrona (amqplib).
-
-## 🧰 Requisitos
-
-- Windows 10/11 com PowerShell 5.1+
-- Docker Desktop 4.x com Docker Compose
-- Node.js 20 LTS (opcional para rodar testes localmente por serviço)
-- Conta/URI do MongoDB Atlas (sem container de Mongo em DEV)
-
-## 🔑 Variáveis de ambiente
-
-Crie um arquivo `.env.local` na raiz (baseado em `.env.local.sample`) com:
-
+```mermaid
+graph TB
+    A["🌐 Interfaces (HTTP/REST)<br/>Controllers, Routes, Middlewares"] 
+    B["⚙️ Application (Use Cases)<br/>Services, DTOs, Business Logic"]
+    C["💼 Domain (Core Business)<br/>Entities, Value Objects, Rules"]
+    D["🔧 Infrastructure (External)<br/>Database, Message Queue, HTTP Client"]
+    
+    A --> B
+    B --> C
+    C --> D
+    
+    style A fill:#2196F3,stroke:#1976D2,stroke-width:3px,color:#fff,font-size:14px
+    style B fill:#4CAF50,stroke:#388E3C,stroke-width:3px,color:#fff,font-size:14px
+    style C fill:#FF9800,stroke:#F57C00,stroke-width:3px,color:#fff,font-size:14px
+    style D fill:#9E9E9E,stroke:#616161,stroke-width:3px,color:#fff,font-size:14px
 ```
+
+#### Princípios SOLID
+
+| Princípio | Sigla | Aplicação no Projeto |
+|-----------|-------|---------------------|
+| **Single Responsibility** | SRP | Middlewares separados (auth/authz/logging) |
+| **Open/Closed** | OCP | Configuração extensível via variáveis de ambiente |
+| **Liskov Substitution** | LSP | Contratos de repositório substituíveis |
+| **Interface Segregation** | ISP | Interfaces específicas por agregado |
+| **Dependency Inversion** | DIP | Injeção de dependências via construtor |
+
+### 🎯 Padrões GoF Implementados
+
+| Padrão | Localização | Propósito |
+|--------|-------------|-----------|
+| **Proxy** | `gateway/` | Intermediação HTTP; controle transversal |
+| **Chain of Responsibility** | `gateway/middlewares/` | Pipeline CORS → Auth → Authz → Proxy |
+| **Adapter** | `*/infrastructure/*Repository.js` | Adaptação MongoDB/HTTP/MQ → Domain |
+| **Observer** | `*/rabbitmq/` | Pub/Sub de eventos assíncronos |
+| **Strategy** | `payment/strategy/` | Políticas de desconto por método |
+| **Factory** | `room/domain/RoomFactory.js` | Criação parametrizada de quartos |
+| **Facade** | `gateway/` | Unificação de APIs internas |
+
+---
+
+## 🛠️ Tecnologias
+
+| Categoria | Tecnologias |
+|-----------|-------------|
+| **Runtime** | Node.js 20 LTS |
+| **Framework** | Express.js |
+| **Banco de Dados** | MongoDB Atlas + Mongoose |
+| **Mensageria** | RabbitMQ (amqplib) |
+| **Autenticação** | JWT (jsonwebtoken) + bcrypt |
+| **Testes** | Jest + Supertest + mongodb-memory-server |
+| **Containerização** | Docker + Docker Compose |
+| **Proxy/Gateway** | http-proxy-middleware |
+| **HTTP Client** | Axios |
+| **Logs** | Morgan |
+
+---
+
+## 📋 Requisitos
+
+### Ambiente de Desenvolvimento
+
+| Requisito | Versão Mínima |
+|-----------|---------------|
+| **Windows** | 10/11 com PowerShell 5.1+ |
+| **Docker Desktop** | 4.x com Docker Compose |
+| **Node.js** | 20 LTS (opcional para testes locais) |
+| **MongoDB Atlas** | Conta ativa com cluster configurado |
+
+### Variáveis de Ambiente
+
+Crie `.env.local` na raiz do projeto:
+
+```env
+# MongoDB Atlas (OBRIGATÓRIO - sem container local)
 MONGODB_URI=mongodb+srv://<usuario>:<senha>@<cluster>/<database>?retryWrites=true&w=majority
-JWT_SECRET=altere_este_valor_no_seu_ambiente
+
+# JWT Secret (altere em produção)
+JWT_SECRET=seu_secret_super_seguro_min_32_chars
 ```
 
-Observações:
-- Não usamos container de Mongo; a URI deve ser do Atlas.
-- RabbitMQ é fornecido pelo docker compose; entre containers use `amqp://rabbitmq`.
-- Em DEV há fallback de JWT_SECRET no compose, mas recomendo definir no `.env.local`.
+> ⚠️ **IMPORTANTE:** O sistema **NÃO usa container de MongoDB**. É necessário usar MongoDB Atlas (cloud).
 
-## 🚀 Como Executar o Projeto (Docker)
+---
 
-Na raiz do projeto, execute no PowerShell:
+## 🚀 Instalação
+
+### 1. Clone o Repositório
+
+```bash
+git clone https://github.com/nathalia-acordi/hotel-management-system.git
+cd hotel-management-system
+```
+
+### 2. Configure MongoDB Atlas
+
+| Passo | Ação |
+|-------|------|
+| 1 | Acesse [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) |
+| 2 | Crie um cluster gratuito |
+| 3 | Configure usuário e senha |
+| 4 | Adicione seu IP à whitelist |
+| 5 | Copie a connection string |
+| 6 | Cole no `.env.local` como `MONGODB_URI` |
+
+### 3. Inicie os Serviços
 
 ```powershell
-# Build + subir todos os serviços
+# Build e start de todos os serviços
 docker compose up --build
 
-# Dica: em versões antigas do Docker, use 'docker-compose'
-# docker-compose up --build
+# Em background (detached)
+docker compose up --build -d
+
+# Ver logs de um serviço específico
+docker compose logs -f gateway
 ```
 
-Após os health checks ficarem verdes:
-- Gateway: http://localhost:3005
-- RabbitMQ UI: http://localhost:15672 (guest/guest)
+### 4. Verifique o Health
 
-## 🧭 Fluxo rápido (via API Gateway)
+Aguarde os health checks ficarem verdes (~30 segundos)
 
-Endpoints principais do gateway:
-- POST /register -> User Service
-- POST /login -> Auth Service
-- GET /validate -> valida JWT (Auth)
-- Rotas protegidas: /users, /reservations, /rooms, /payments
+| Serviço | URL | Credenciais |
+|---------|-----|-------------|
+| **Gateway** | http://localhost:3005/health | - |
+| **RabbitMQ UI** | http://localhost:15672 | guest / guest |
 
-Exemplos (PowerShell):
+---
+
+## 💻 Uso
+
+### Fluxo Completo via PowerShell
 
 ```powershell
-# 1) Registrar um hóspede
-$body = @{ name = 'Alice'; email = 'alice@example.com'; document = '12345678901'; password = 'Str0ng@Pass'; role = 'guest' } | ConvertTo-Json
-Invoke-RestMethod -Uri 'http://localhost:3005/register' -Method Post -ContentType 'application/json' -Body $body
+# ==========================================
+# 1. AUTO-CADASTRO DE HÓSPEDE (UC01)
+# ==========================================
+$cadastro = @{
+    name = 'Alice Silva'
+    email = 'alice@hotel.com'
+    document = '12345678901'
+    phone = '47999999999'
+    password = 'SenhaForte123!'
+} | ConvertTo-Json
 
-# 2) Login
-$login = @{ username = 'alice@example.com'; password = 'Str0ng@Pass' } | ConvertTo-Json
-$resp = Invoke-RestMethod -Uri 'http://localhost:3005/login' -Method Post -ContentType 'application/json' -Body $login
-$token = $resp.token
+$hospede = Invoke-RestMethod -Uri 'http://localhost:3005/register' `
+    -Method Post `
+    -ContentType 'application/json' `
+    -Body $cadastro
 
-# 3) Validar token
-Invoke-RestMethod -Uri 'http://localhost:3005/validate' -Headers @{ Authorization = "Bearer $token" } -Method Get
+Write-Host "✅ Hóspede cadastrado: $($hospede.name)" -ForegroundColor Green
 
-# 4) Rota protegida (ex.: quartos)
-Invoke-RestMethod -Uri 'http://localhost:3005/rooms' -Headers @{ Authorization = "Bearer $token" } -Method Get
+# ==========================================
+# 2. LOGIN (UC02)
+# ==========================================
+$login = @{
+    username = 'alice@hotel.com'
+    password = 'SenhaForte123!'
+} | ConvertTo-Json
+
+$auth = Invoke-RestMethod -Uri 'http://localhost:3005/login' `
+    -Method Post `
+    -ContentType 'application/json' `
+    -Body $login
+
+$token = $auth.token
+Write-Host "✅ Token JWT obtido" -ForegroundColor Green
+
+# ==========================================
+# 3. VALIDAR TOKEN
+# ==========================================
+$validacao = Invoke-RestMethod -Uri 'http://localhost:3005/validate' `
+    -Method Get `
+    -Headers @{ Authorization = "Bearer $token" }
+
+Write-Host "✅ Token válido. Role: $($validacao.role)" -ForegroundColor Green
+
+# ==========================================
+# 4. LISTAR QUARTOS DISPONÍVEIS (UC04)
+# ==========================================
+$quartos = Invoke-RestMethod -Uri 'http://localhost:3005/api/rooms' `
+    -Method Get `
+    -Headers @{ Authorization = "Bearer $token" }
+
+Write-Host "✅ Quartos disponíveis: $($quartos.Count)" -ForegroundColor Green
 ```
 
-Se preferir curl (Windows):
+### Endpoints da API Gateway
 
-```powershell
-curl.exe -s -X POST http://localhost:3005/login -H "Content-Type: application/json" -d '{"username":"alice@example.com","password":"Str0ng@Pass"}' | ConvertFrom-Json
+| Método | Endpoint | Auth | Role | Descrição |
+|--------|----------|------|------|-----------|
+| GET | `/health` | ❌ | - | Health check |
+| POST | `/register` | ❌ | - | Auto-cadastro de hóspede |
+| POST | `/login` | ❌ | - | Autenticação |
+| GET | `/validate` | ✅ | Qualquer | Validar token |
+| * | `/api/users/*` | ✅ | admin, receptionist | Gerenciar usuários |
+| * | `/api/rooms/*` | ✅ | admin, receptionist | Gerenciar quartos |
+| * | `/api/reservations/*` | ✅ | admin, receptionist | Gerenciar reservas |
+| POST | `/api/payments/*` | ✅ | admin, receptionist | Processar pagamentos |
+
+### Usando cURL (Windows)
+
+```bash
+# Login
+curl.exe -X POST http://localhost:3005/login ^
+  -H "Content-Type: application/json" ^
+  -d "{\"username\":\"alice@hotel.com\",\"password\":\"SenhaForte123!\"}"
+
+# Listar quartos (substitua SEU_TOKEN)
+curl.exe -X GET http://localhost:3005/api/rooms ^
+  -H "Authorization: Bearer SEU_TOKEN_AQUI"
 ```
 
-## 🧪 Executando os testes
+---
 
-Todos os serviços via Docker Compose (encerra quando os testes acabam):
+## 🧪 Testes
+
+### Cobertura Atual (12/11/2025)
+
+| Serviço | Statements | Branches | Functions | Lines | Status |
+|---------|------------|----------|-----------|-------|--------|
+| **auth** | 62.37% | 56.07% | 68.18% | 65.40% | 🟡 |
+| **payment** | 66.66% | 76.19% | 65.21% | 66.29% | 🟢 |
+| **reservation** | 46.44% | 56.21% | 37.77% | 47.88% | 🔴 |
+| **gateway** | 54.54% | 62.50% | 63.63% | 54.54% | 🟡 |
+| **room** | 49.25% | 36.36% | 47.82% | 53.06% | 🟡 |
+| **user** | 40.30% | 43.10% | 36.06% | 40.75% | 🔴 |
+| **MÉDIA** | **53.93%** | **55.24%** | **53.45%** | **54.65%** | 🟡 |
+
+**Meta:** 75% (RNF06) | **Ferramentas:** Jest + Supertest + mongodb-memory-server
+
+### Executar Testes
 
 ```powershell
+# Todos os serviços via Docker (recomendado)
 docker compose up --build --abort-on-container-exit --remove-orphans
-```
 
-Unit test por serviço (ex.: user):
-
-```powershell
+# Teste unitário por serviço
 cd services/user
 npm install
 npm test
+
+# Com relatório de cobertura
+npm test -- --coverage
+
+# Visualizar relatório HTML
+start coverage/index.html
 ```
 
-Notas:
-- Testes usam ESM/Jest; alguns serviços têm setupFilesAfterEnv.
-- Logs ruidosos sanitizados; erros em pt-BR.
+### Estratégia de Testes
 
-## 📋 Requisitos do Sistema — Casos de Uso
+| Tipo | Descrição | Ferramentas |
+|------|-----------|-------------|
+| **Unitários** | Funções, classes, regras de negócio isoladas | Jest |
+| **Integração** | Comunicação entre módulos de um serviço | Jest + Supertest |
+| **E2E** | Fluxo completo Gateway → Serviços → Filas | Jest + Docker + RabbitMQ |
+
+---
+
+## 🎭 Permissões
+
+| Operação | 👑 Admin | 📋 Receptionist | 🏠 Guest |
+|----------|----------|-----------------|----------|
+| Auto-cadastro | ❌ | ❌ | ✅ |
+| Cadastrar hóspede | ✅ | ✅ | ❌ |
+| Gerenciar usuários | ✅ | ❌ | ❌ |
+| Criar/Editar/Remover quartos | ✅ | ✅ | ❌ |
+| Criar reserva | ✅ | ✅ | ❌ |
+| Cancelar reserva | ✅ | ✅ | ❌ |
+| Processar pagamento | ✅ | ✅ | ❌ |
+| Check-in/Check-out | ✅ | ✅ | ❌ |
+| Consultar relatórios | ✅ | ✅ | ❌ |
+
+---
+
+## 🔧 Solução de Problemas
 
 <details>
-<summary><b>UC01 — Auto-cadastro de Hóspede</b></summary>
+<summary><b>❌ Erro de conexão com MongoDB</b></summary>
 
-**Ator Primário:** Hóspede
+**Causa:** URI inválida ou IP não liberado no Atlas
 
-**Fluxo Principal:**
-1. Hóspede acessa o endpoint `/register` do User Service.
-2. Informa dados obrigatórios (nome, e-mail, documento, senha, etc).
-3. Sistema valida:
-  - Formato de e-mail, CPF/RG, telefone.
-  - Unicidade de e-mail e documento.
-  - Senha mínima e hash.
-4. Sistema publica evento `user.created` no RabbitMQ.
-5. Hóspede recebe confirmação de cadastro.
-
-**Fluxos Alternativos:**
-- 2a. Dados obrigatórios ausentes: sistema retorna erro 400.
-- 3a. Documento ou e-mail já cadastrado: sistema retorna erro 409.
-- 3b. Formato inválido: sistema retorna erro 400.
-
-**Regras de Negócio:**
-- Apenas hóspedes podem usar este fluxo.
-- Não é permitido auto-cadastro com e-mail ou documento já cadastrado.
-- Senha nunca é retornada nem armazenada em texto puro.
-- Evento de criação é publicado para integração com outros serviços.
+**Solução:**
+1. Verifique `MONGODB_URI` no `.env.local`
+2. No MongoDB Atlas: Network Access → Add IP Address → Add Current IP
+3. Teste a conexão: `docker compose logs user`
 
 </details>
 
 <details>
-<summary><b>UC02 — Cadastro de Hóspede por Admin/Receptionist</b></summary>
+<summary><b>❌ 401 Unauthorized em rotas protegidas</b></summary>
 
-**Ator Primário:** Receptionist/Admin
+**Causa:** Token JWT ausente, inválido ou expirado
 
-**Fluxo Principal:**
-1. Admin/Receptionist acessa endpoint `/users` (POST) autenticado.
-2. Informa dados do hóspede.
-3. Sistema valida, cria conta e publica evento `user.created`.
-4. Recebe confirmação.
-
-**Fluxos Alternativos:**
-- 2a. Dados inválidos: sistema retorna erro 400.
-- 3a. Documento já cadastrado: sistema retorna erro 409.
-
-**Regras de Negócio:**
-- JWT obrigatório para endpoints protegidos.
-- Senha armazenada com hash.
+**Solução:**
+1. Faça login novamente: `POST /login`
+2. Verifique o header: `Authorization: Bearer <token>`
+3. Valide o token: `GET /validate`
 
 </details>
 
 <details>
-<summary><b>UC04 — Gerenciamento de Quartos</b></summary>
+<summary><b>❌ 403 Forbidden</b></summary>
 
-**Ator Primário:** Admin/Receptionist
+**Causa:** Role do usuário não tem permissão
 
-**Fluxo Principal:**
-1. Acessa `/rooms` autenticado.
-2. Cria, edita ou remove quartos.
-3. Sistema valida:
-  - Número único por quarto.
-  - Preço positivo.
-  - Tipo válido (RoomFactory).
-4. Confirmação.
-
-**Fluxos Alternativos:**
-- 2a. Remover quarto ocupado: erro 400.
-- 2b. Número duplicado: erro 400.
-- 2c. Preço ≤ 0: erro 400.
-
-**Regras de Negócio:**
-- Apenas admin/receptionist gerenciam quartos (JWT).
-- Integridade de quartos ocupados preservada.
-- Factory Pattern para criação de instâncias.
+**Solução:**
+1. Verifique a role no token: `GET /validate`
+2. Consulte a tabela de permissões acima
+3. Use um usuário com role adequada (admin/receptionist)
 
 </details>
 
 <details>
-<summary><b>UC05 — Reservas</b></summary>
+<summary><b>❌ Porta já em uso</b></summary>
 
-**Ator Primário:** Receptionist/Admin
+**Causa:** Outro processo usando a porta
 
-**Fluxo Principal:**
-1. Acessa `/reservations` autenticado.
-2. Informa dados (hóspede, quarto, datas).
-3. Sistema valida:
-  - Campos obrigatórios e tipos.
-  - Datas válidas (checkIn < checkOut).
-  - Disponibilidade do quarto (sem overbooking).
-  - guestId pode ser diferente de userId (reserva para terceiros).
-4. Confirmação.
+**Solução (PowerShell):**
+```powershell
+# Listar processo na porta 3005
+netstat -ano | findstr :3005
 
-**Fluxos Alternativos:**
-- 3a. Quarto indisponível: erro 400.
-- 2a. Dados inválidos: erro 400.
-- 5a. Cancelamento após check-in/out: erro 400.
-- 5b. Usuário comum tentando criar/cancelar: erro 403.
+# Matar processo (substitua PID)
+taskkill /PID <numero_do_pid> /F
 
-**Regras de Negócio:**
-- Apenas receptionist/admin criam/cancelam/alteram (JWT).
-- Sem overbooking.
-- Cancelamento só antes do check-in.
-- Não cancelar reserva finalizada.
-- guestId ≠ userId permitido.
-- Eventos publicados.
+# Ou altere a porta no docker-compose.yml
+```
 
 </details>
 
 <details>
-<summary><b>UC06 — Pagamento de Reserva</b></summary>
+<summary><b>❌ RabbitMQ indisponível</b></summary>
 
-**Ator Primário:** Receptionist/Admin
+**Causa:** Container ainda inicializando
 
-**Fluxo Principal:**
-1. Acessa `/payments` autenticado.
-2. Informa reserva e dados do pagamento.
-3. Sistema valida:
-  - Reserva existe e está confirmada.
-  - Valor positivo.
-  - Método aceito (cartao, pix, dinheiro).
-  - Não pode pagar reserva já paga.
-4. Aplica Strategy de descontos.
-5. Publica evento.
-6. Confirmação.
-
-**Fluxos Alternativos:**
-- 2a. Pagamento duplicado: erro 400.
-- 2b. Reserva não confirmada: rejeita.
-- 2c. Valor inválido: erro 400.
-- 2d. Método inválido: erro 400.
-
-**Regras de Negócio:**
-- Só reservas confirmadas podem ser pagas.
-- Apenas um pagamento por reserva.
-- Strategy Pattern para descontos.
-- Integração com gateway pode ser simulada.
-- Eventos publicados.
+**Solução:**
+1. Aguarde ~30 segundos após `docker compose up`
+2. Verifique: `docker compose ps`
+3. Veja logs: `docker compose logs rabbitmq`
+4. Acesse UI: http://localhost:15672 (guest/guest)
 
 </details>
 
-<details>
-<summary><b>UC07 — Check-in e Check-out</b></summary>
-
-**Ator Primário:** Receptionist/Admin
-
-**Fluxo Principal:**
-1. Acessa `/reservations/checkin` ou `/reservations/checkout` autenticado.
-2. Informa reserva.
-3. Validações:
-  - Check-in somente se reserva paga.
-  - Check-out somente após check-in.
-  - Não operar em reserva cancelada/finalizada.
-4. Publica eventos.
-5. Confirmação.
-
-**Fluxos Alternativos:**
-- 2a. Check-in sem pagamento: erro 400.
-- 2b. Check-out sem check-in: erro 400.
-- 2c. Usuário comum tentando operar: erro 403.
-
-**Regras de Negócio:**
-- Check-in apenas para reservas pagas.
-- Check-out após check-in.
-- Só receptionist/admin operam (JWT).
-- Eventos publicados.
-
-</details>
-
-<details>
-<summary><b>UC08 — Relatórios e Auditoria</b></summary>
-
-**Ator Primário:** Admin/Receptionist
-
-**Fluxo Principal:**
-1. Acessa `/reports` autenticado.
-2. Solicita relatório de reservas, pagamentos, ocupação ou faturamento.
-3. Sistema gera relatório filtrado (período, status, etc.).
-4. Recebe relatório.
-
-**Fluxos Alternativos:**
-- 2a. Usuário comum tentando acessar: erro 403.
-- 2b. Parâmetros inválidos: erro 400.
-
-**Regras de Negócio:**
-- Apenas admin/receptionist acessam (JWT).
-- Faturamento considera apenas reservas pagas e finalizadas.
-
-</details>
-
-## ✅ Boas práticas e decisões
-
-- Roles padronizadas em EN: admin, receptionist, guest (não traduzir no payload)
-- Mensagens e erros em pt-BR nos endpoints
-- Sem segredos em Dockerfiles; segredos via variáveis de ambiente
-- .gitignore/.dockerignore reforçados; não commitar `.env.local` nem pastas de cobertura
-- Health checks HTTP em todos os serviços; `/health` inclui status do Mongo e origem dos segredos em não-prod
-- Persistência real no MongoDB (user e room) via Mongoose; em DEV requer Atlas
-
-## 🩺 Health e observabilidade
-
-- GET `/health` em cada serviço retorna JSON com status, uptime e (em dev) origem das variáveis de segredo.
-- RabbitMQ console: http://localhost:15672 (guest/guest).
-
-## 🛠️ Solução de problemas (FAQ rápido)
-
-- Erro de conexão com Mongo: verifique `MONGODB_URI` no `.env.local` (Atlas) e liberação de IPs no cluster.
-- 401/403 em rotas protegidas: confira `Authorization: Bearer <token>` e a role do usuário.
-- Porta em uso: ajuste as portas no `docker-compose.yml` ou pare processos locais.
-- RabbitMQ indisponível: aguarde o health check ficar verde; veja logs do serviço.
+---
 
 ## 🤝 Contribuição
 
-Contribuições são bem-vindas! Abra issues ou pull requests. Antes de enviar, rode os testes do serviço impactado.
+Contribuições são bem-vindas! Por favor:
+
+1. Fork o projeto
+2. Crie uma branch: `git checkout -b feature/MinhaFeature`
+3. Commit suas mudanças: `git commit -m 'feat: adiciona nova funcionalidade'`
+4. Push para a branch: `git push origin feature/MinhaFeature`
+5. Abra um Pull Request
+
+**Antes de enviar:**
+- Execute os testes: `npm test`
+- Verifique a cobertura: `npm test -- --coverage`
+- Siga os princípios SOLID e Clean Architecture
+
+---
+
+**[⬆ Voltar ao topo](#-hotel-management-system)**
+
+Feito com ❤️ por Nathália Acordi e Nicolas Weber
+
+</div>
