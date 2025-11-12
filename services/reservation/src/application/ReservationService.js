@@ -3,7 +3,7 @@ import { Reservation } from '../domain/Reservation.js';
 export class ReservationService {
   constructor(reservationRepository) {
     this.reservationRepository = reservationRepository;
-    this.nextId = 1;
+    //this.nextId = 1;
   }
 
   createReservation({ userId, guestId, roomId, checkIn, checkOut }) {
@@ -36,7 +36,7 @@ export class ReservationService {
       throw new Error('Quarto já reservado para o período informado.');
     }
     const reservation = new Reservation({
-      id: this.nextId++,
+      id: undefined, // MongoDB gerará o id
       userId,
       guestId: finalGuestId,
       roomId,
