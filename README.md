@@ -3,10 +3,6 @@
 
 Este repositório contém um conjunto de microsserviços orquestrados por um API Gateway. Para uma visão detalhada da arquitetura, comunicação, princípios SOLID, padrões de projeto e estratégia de testes, consulte:
 
-- `docs/arquitetura.md`
-
-Se desejar subir todo o ambiente com Docker, use o `docker-compose.yml` na raiz.
-
 <a href="https://nodejs.org/" target="_blank"><img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js"/></a>
 <a href="https://expressjs.com/" target="_blank"><img src="https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express.js"/></a>
 <a href="https://www.docker.com/" target="_blank"><img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/></a>
@@ -462,3 +458,4 @@ cd services/gateway; npm install; node --experimental-vm-modules ./node_modules/
 ## 🤝 Contribuição
 
 Contribuições são bem-vindas! Abra issues ou pull requests. Antes de enviar, rode os testes do serviço impactado.
+
