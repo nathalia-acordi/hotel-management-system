@@ -16,6 +16,12 @@ jobs:
         working-directory: ./services/${{ matrix.service }}
     steps:
       - uses: actions/checkout@v4
+      - name: Start dependent services (gateway only)
+        if: "${{ matrix.service == 'gateway' }}"
+        run: |
+          cd ${{ github.workspace }}
+          docker compose up -d --build user auth reservation payment room gateway
+          sleep 10
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
