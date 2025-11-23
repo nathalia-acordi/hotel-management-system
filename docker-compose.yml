@@ -51,6 +51,8 @@ services:
       retries: 10
 
   room:
+    build:
+      context: ./services/room
     image: test-room
     container_name: room-service
     env_file:
@@ -77,6 +79,8 @@ services:
       retries: 10
 
   reservation:
+    build:
+      context: ./services/reservation
     image: test-reservation
     container_name: reservation-service
     ports:
