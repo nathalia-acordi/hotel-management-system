@@ -13,6 +13,7 @@ import { AuthService } from '../application/AuthService.js';
 import { register as registerHandler } from './userController.js';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -26,8 +27,17 @@ export function createApp() {
   const app = express();
   app.use(express.json());
   
-  const swaggerDocument = YAML.load(path.join(__dirname, '../../swagger.yaml'));
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+  try {
+    const swaggerPath = path.join(__dirname, '../../swagger.yaml');
+    if (fs.existsSync(swaggerPath)) {
+      const swaggerDocument = YAML.load(swaggerPath);
+      app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    } else {
+      console.warn('[ROUTES] swagger.yaml não encontrado, pulando /docs');
+    }
+  } catch (err) {
+    console.warn('[ROUTES] Falha ao carregar swagger.yaml:', err?.message || err);
+  }
   configureRoutes(app);
   return app;
 }

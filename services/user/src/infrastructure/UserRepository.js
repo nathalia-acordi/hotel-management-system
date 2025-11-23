@@ -13,11 +13,11 @@ import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true, index: true },
-  document: { type: String, required: true, unique: true, index: true },
-  phone: { type: String, required: true },
+  email: { type: String },
+  document: { type: String },
+  phone: { type: String },
   password: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'receptionist', 'guest'], default: 'guest' },
+  role: { type: String, enum: ['admin', 'receptionist', 'guest', 'user'], default: 'guest' },
   active: { type: Boolean, default: true },
 }, { timestamps: true });
 
@@ -35,7 +35,7 @@ export class UserRepositoryImpl {
       const dup = await UserModel.findOne({ $or: [ { username: user.username }, { email: user.email }, { document: user.document } ] });
       if (dup) {
         const field = dup.email === user.email ? 'email' : (dup.document === user.document ? 'document' : 'username');
-        const err = new Error('Conflito: usuário já existe');
+        const err = new Error('Username already exists');
         err.httpStatus = 409;
         throw err;
       }
@@ -51,7 +51,7 @@ export class UserRepositoryImpl {
       });
       
       if (error.code === 11000) {
-        const err = new Error('Conflito: usuário já existe');
+        const err = new Error('Username already exists');
         err.httpStatus = 409;
         throw err;
       }
