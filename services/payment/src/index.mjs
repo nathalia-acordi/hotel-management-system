@@ -12,9 +12,11 @@ const __dirname = path.dirname(__filename);
 
 const mongoUri = process.env.PAYMENT_MONGODB_URI || process.env.MONGODB_URI;
 
-// When running tests, export an Express `app` using an in-memory repository so
-// tests can import the module without starting the HTTP server or connecting
-// to MongoDB.
+// Export a top-level identifier for the app so tests can import it. The
+// actual value is assigned below depending on `NODE_ENV`. Exports must be
+// static/top-level in ESM, so we avoid `export` statements inside blocks.
+let exportedApp = undefined;
+
 if (process.env.NODE_ENV === 'test') {
   class InMemoryPaymentRepository {
     constructor() {
@@ -44,7 +46,7 @@ if (process.env.NODE_ENV === 'test') {
     // ignore swagger attach errors in test environment
   }
 
-  export default app;
+  exportedApp = app;
 
 } else {
   if (!mongoUri) {
@@ -74,3 +76,5 @@ if (process.env.NODE_ENV === 'test') {
 
   startServer();
 }
+// export top-level identifier (may be undefined in non-test runtime)
+export default exportedApp;
