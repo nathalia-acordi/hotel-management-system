@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'gateway'
+    static_configs:
+      - targets: ['gateway:3005']
+
+  - job_name: 'user'
+    static_configs:
+      - targets: ['user:3000']
+
+  - job_name: 'auth'
+    static_configs:
+      - targets: ['auth:3001']
+
+  - job_name: 'reservation'
+    static_configs:
+      - targets: ['reservation:3000']
+
+  - job_name: 'payment'
+    static_configs:
+      - targets: ['payment:3003']
+
+  - job_name: 'room'
+    static_configs:
+      - targets: ['room:3004']
+
+# Expose Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

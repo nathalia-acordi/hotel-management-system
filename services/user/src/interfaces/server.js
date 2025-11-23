@@ -10,6 +10,7 @@ dotenv.config();
 
 
 import express from 'express';
+import { attachMetrics } from '../monitoring/metrics.js';
 import { connectToDatabase, mongoReady, getLastMongoError } from './database.js';
 import { getSecretSource } from './config/secrets.js';
 import { configureRoutes } from './routes.js';
@@ -23,6 +24,7 @@ const __dirname = path.dirname(__filename);
 
 export function createApp() {
   const app = express();
+  try { attachMetrics(app); } catch (e) { console.warn('[USER] metrics attach failed', e && e.message); }
   
   app.use((req, res, next) => {
     try {

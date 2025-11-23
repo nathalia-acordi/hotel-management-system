@@ -10,6 +10,7 @@
 
 
 import express from 'express';
+import { attachMetrics } from '../monitoring/metrics.js';
 import { login } from './authController.js';
 import { accessControl } from '../middleware/accessControl.js';
 import { verify } from '../infrastructure/tokenAdapter.js';
@@ -17,6 +18,7 @@ import { getSecretSource } from './config/secrets.js';
 
 export function createApp({ loginMiddleware = login() } = {}) {
 	const app = express();
+	try { attachMetrics(app); } catch (e) { console.warn('[AUTH] metrics attach failed', e && e.message); }
 	app.use(express.json()); 
 
 	

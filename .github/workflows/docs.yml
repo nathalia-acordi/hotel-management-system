@@ -1,0 +1,28 @@
+name: Generate Swagger Docs
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install yamljs
+        run: npm install -g yamljs
+      - name: Convert swagger YAML to JSON
+        run: |
+          mkdir -p docs/swagger
+          for f in services/*/src/swagger.yaml; do
+            name=$(basename $(dirname $f))
+            yaml2json "$f" > "docs/swagger/${name}.json"
+          done
+      - name: Commit generated docs
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "chore(docs): generate swagger JSON"
+          file_pattern: "docs/swagger/*"
+          branch: main
+          author_name: github-actions
+          author_email: actions@github.com

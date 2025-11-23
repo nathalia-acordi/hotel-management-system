@@ -14,6 +14,7 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { attachMetrics } from './monitoring/metrics.js';
 
 dotenv.config();
 
@@ -31,8 +32,9 @@ mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 }).then(() => {
-  console.log('[RESERVATION] Conectado ao MongoDB');
+    console.log('[RESERVATION] Conectado ao MongoDB');
   const app = express();
+  try { attachMetrics(app); } catch (e) { console.warn('[RESERVATION] metrics attach failed', e && e.message); }
   app.use(express.json());
 
   

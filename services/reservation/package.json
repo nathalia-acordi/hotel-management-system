@@ -8,6 +8,7 @@
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.mjs --coverage"
   },
   "dependencies": {
+    "prom-client": "^15.0.0",
     "amqplib": "^0.10.9",
     "dotenv": "^16.3.1",
     "express": "^5.1.0",
@@ -19,5 +20,16 @@
   },
   "devDependencies": {
     "jest": "^29.0.0"
+  }
+  ,
+  "jest": {
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
   }
 }

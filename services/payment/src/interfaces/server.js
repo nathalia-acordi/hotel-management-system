@@ -1,9 +1,11 @@
 import express from 'express';
+import { attachMetrics } from '../monitoring/metrics.js';
 import { createPaymentController } from './paymentController.js';
 import amqp from 'amqplib';
 
 export function createApp(paymentService) {
   const app = express();
+  try { attachMetrics(app); } catch (e) { console.warn('[PAYMENT] metrics attach failed', e && e.message); }
   app.use(express.json());
   const controller = createPaymentController(paymentService);
 

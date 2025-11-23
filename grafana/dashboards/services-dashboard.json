@@ -1,0 +1,51 @@
+{
+  "id": null,
+  "uid": null,
+  "title": "Services Overview",
+  "tags": ["services","prometheus"],
+  "timezone": "browser",
+  "schemaVersion": 16,
+  "version": 0,
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Request Rate (http_requests_total)",
+      "id": 1,
+      "targets": [
+        { "expr": "sum(rate(http_requests_total[1m])) by (instance)", "legendFormat": "{{instance}}" }
+      ],
+      "datasource": "-- Prometheus --",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 }
+    },
+    {
+      "type": "graph",
+      "title": "Request Duration (histogram)",
+      "id": 2,
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[1m])) by (le, instance))", "legendFormat": "p95 {{instance}}" }
+      ],
+      "datasource": "-- Prometheus --",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 }
+    },
+    {
+      "type": "graph",
+      "title": "Error Rate (5xx)",
+      "id": 3,
+      "targets": [
+        { "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) by (instance)", "legendFormat": "{{instance}}" }
+      ],
+      "datasource": "-- Prometheus --",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 }
+    },
+    {
+      "type": "graph",
+      "title": "Container CPU (placeholder)",
+      "id": 4,
+      "targets": [
+        { "expr": "sum(rate(container_cpu_usage_seconds_total[1m])) by (container_label_com_docker_swarm_service_name)", "legendFormat": "{{container_label_com_docker_swarm_service_name}}" }
+      ],
+      "datasource": "-- Prometheus --",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 }
+    }
+  ]
+}

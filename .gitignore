@@ -51,3 +51,6 @@ build/
 *.p12
 *.crt*
 *.bak
+# Env templates (do not commit secrets)
+.env.development
+.env.production

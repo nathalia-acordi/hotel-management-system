@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import { setupProxies } from './proxyRoutes.js';
+import { attachMetrics } from './monitoring/metrics.js';
 
 dotenv.config();
 
@@ -10,6 +11,8 @@ const app = express();
 const PORT = process.env.PORT || 3005;
 
 app.use(cors());
+
+try { attachMetrics(app); } catch (e) { console.warn('[GATEWAY] metrics attach failed', e && e.message); }
 
 app.use(morgan(':method :url :status :response-time ms', {
   skip: (req) => req.path === '/health'

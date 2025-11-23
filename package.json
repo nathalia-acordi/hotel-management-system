@@ -8,4 +8,13 @@
     "swagger-ui-express": "^5.0.1",
     "yamljs": "^0.3.0"
   }
+  ,
+  "scripts": {
+    "test:all": "npm run test --workspaces",
+    "test:coverage": "npm run test:coverage --workspaces",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "monitoring:start": "docker compose up -d prometheus grafana"
+  }
 }

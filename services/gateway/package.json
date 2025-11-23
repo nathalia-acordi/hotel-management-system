@@ -9,6 +9,7 @@
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.mjs"
   },
   "dependencies": {
+    "prom-client": "^15.0.0",
     "axios": "^1.12.2",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
@@ -21,5 +22,16 @@
     "jest": "^30.1.3",
     "nodemon": "^3.0.1",
     "supertest": "^7.1.4"
+  }
+  ,
+  "jest": {
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
   }
 }

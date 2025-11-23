@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 import { Room } from '../models/Room.js';
 
 export class RoomFactory {

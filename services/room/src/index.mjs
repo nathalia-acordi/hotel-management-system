@@ -10,6 +10,7 @@ import { RoomService } from './application/RoomService.js';
 import { MongoRoomRepository } from './infrastructure/MongoRoomRepository.js';
 import { getSecretSource } from './interfaces/config/secrets.js';
 import { createRoomSchema, updateRoomSchema, patchStatusSchema } from './interfaces/dto/roomSchemas.js';
+import { attachMetrics } from './monitoring/metrics.js';
 
 dotenv.config();
 mongoose.set('strictQuery', true);
@@ -200,6 +201,7 @@ function setupErrorHandling(app) {
 
 export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = defaultIsAdmin, authorizeRoles = defaultAuthorizeRoles } = {}) {
   const app = express();
+  try { attachMetrics(app); } catch (e) { console.warn('[ROOM] metrics attach failed', e && e.message); }
   app.use(express.json());
 
   setupSwagger(app);
