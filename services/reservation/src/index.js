@@ -9,10 +9,12 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import reservationController from './interfaces/reservationController.js';
 import { MongoReservationRepository } from './infrastructure/MongoReservationRepository.js';
+import { InMemoryReservationRepository } from './infrastructure/InMemoryReservationRepository.js';
 import { startUserCreatedConsumer } from './rabbitmqConsumer.js';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { attachMetrics } from './monitoring/metrics.js';
 
@@ -43,12 +45,23 @@ export function createApp({ authenticateJWT = (req, res, next) => next(), isRece
     res.status(mongo ? 200 : 503).json(body);
   });
 
-  const reservationRepository = new MongoReservationRepository();
-  global.__reservationRepository__ = reservationRepository;
+  // Prefer an injected global repository (tests may set it). In test env default to InMemory repo to avoid Mongo buffering.
+  const reservationRepository = global.__reservationRepository__ || (process.env.NODE_ENV === 'test' ? new InMemoryReservationRepository() : new MongoReservationRepository());
+  // set global only if not already defined so tests can inject an in-memory repo
+  if (!global.__reservationRepository__) global.__reservationRepository__ = reservationRepository;
   app.use('/', reservationController({ authenticateJWT, isRecepcionista }));
 
-  const swaggerDocument = YAML.load(path.join(__dirname, 'swagger.yaml'));
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+  try {
+    const swaggerPath = path.join(__dirname, 'swagger.yaml');
+    if (fs.existsSync(swaggerPath)) {
+      const swaggerDocument = YAML.load(swaggerPath);
+      app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    } else {
+      console.warn('[RESERVATION] swagger.yaml não encontrado, pulando /docs');
+    }
+  } catch (e) {
+    console.warn('[RESERVATION] Falha ao carregar swagger:', e && e.message);
+  }
 
   return app;
 }
