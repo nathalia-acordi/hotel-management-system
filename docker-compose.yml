@@ -108,7 +108,8 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3003
-      PAYMENT_MONGODB_URI: mongodb+srv://nathaliaccord_db_user:6xajAOAJ9k12mWgB@cluster0.ovagacl.mongodb.net/?appName=Cluster0
+      # Use an env var for the payment DB URI. Do NOT commit credentials to the repo.
+      PAYMENT_MONGODB_URI: ${PAYMENT_MONGODB_URI:-mongodb://mongodb:27017/payment_service}
       RESERVATION_URL: http://reservation-service:3000
       JWT_SECRET: ${JWT_SECRET:-segredo_super_secreto}
       RABBITMQ_URL: ${RABBITMQ_URL:-amqp://rabbitmq:5672}
