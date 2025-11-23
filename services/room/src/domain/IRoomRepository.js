@@ -1,3 +1,9 @@
+
+
+
+
+
+
 export class IRoomRepository {
   async create(room) {
     throw new Error('Método não implementado.');

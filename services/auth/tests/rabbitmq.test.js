@@ -21,14 +21,14 @@ describe('infrastructure/rabbitmq', () => {
       createChannelMock = jest.fn().mockResolvedValue('mockChannel');
       connectionObj = { createChannel: createChannelMock };
       connectMock = jest.spyOn(amqplib, 'connect').mockResolvedValue(connectionObj);
-      // Limpa o singleton usando função de teste
+      
       rabbitmq.__resetRabbitChannel();
     });
     afterEach(() => {
       connectMock.mockRestore();
     });
     it('deve criar e retornar channel se não existir', async () => {
-      // Reimporta para garantir singleton limpo
+      
       const { getRabbitChannel } = await import('../src/infrastructure/rabbitmq.js');
       const ch = await getRabbitChannel();
       expect(connectMock).toHaveBeenCalled();
@@ -68,6 +68,6 @@ describe('infrastructure/rabbitmq', () => {
   });
 });
 
-// Integration tests moved to tests/integration/rabbitmq.integration.test.mjs
 
-// duplicate unit tests removed (covered above)
+
+

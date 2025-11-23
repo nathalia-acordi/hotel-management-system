@@ -1,5 +1,5 @@
-// InMemoryReservationRepository.js
-// Implementação concreta do ReservationRepository (SRP, DIP)
+
+
 import { ReservationRepository } from '../domain/ReservationRepository.js';
 
 export class InMemoryReservationRepository extends ReservationRepository {

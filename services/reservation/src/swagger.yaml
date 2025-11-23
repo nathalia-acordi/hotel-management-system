@@ -1,0 +1,131 @@
+openapi: 3.0.3
+info:
+  title: Reservation Service API
+  version: 1.0.0
+  description: |
+    API para gerenciamento de reservas. Rotas protegidas exigem JWT obtido via login ou exportação pelo script.
+
+    Observações importantes:
+    - Este serviço aceita `guestId`, `roomId` e `userId` como *string* (ObjectId) ou *número*.
+    - Validações remotas (checar se usuário/quarto existem em serviços remotos) podem ser ativadas com a variável de ambiente `VALIDATE_REMOTE_ENTITIES=true`.
+    - Quando acessado via API Gateway, as rotas são prefixadas com `/api` (ex.: `POST /api/reservations`).
+servers:
+  - url: http://localhost:3005/api
+    description: API Gateway (rotas expostas em `/api`)
+security:
+  - BearerAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: string
+        guestId:
+          type: string
+        roomId:
+          type: string
+        checkIn:
+          type: string
+          format: date
+        checkOut:
+          type: string
+          format: date
+        status:
+          type: string
+      required: [guestId, roomId, checkIn, checkOut]
+paths:
+  /api/reservations:
+    post:
+      summary: Criar reserva
+      description: Cria uma nova reserva. Requer token JWT.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+      responses:
+        '201':
+          description: Reserva criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+    get:
+      summary: Listar reservas
+      description: Lista todas as reservas. Requer token JWT.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de reservas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reservation'
+
+  /api/reservations/{id}:
+    get:
+      summary: Obter reserva por ID
+      description: Retorna detalhes de uma reserva. Requer token JWT.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalhes da reserva
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '404':
+          description: Reserva não encontrada
+    put:
+      summary: Atualizar reserva
+      description: Atualiza dados da reserva. Requer token JWT.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+      responses:
+        '200':
+          description: Reserva atualizada
+    delete:
+      summary: Remover reserva
+      description: Remove uma reserva. Requer token JWT.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reserva removida

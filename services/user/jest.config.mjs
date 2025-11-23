@@ -11,6 +11,6 @@ export default {
     '!src/interfaces/docs/**',
     '!**/tests/**'
   ],
-  // Temporarily relax thresholds during stabilization. Uncomment/tune later.
-  // coverageThreshold: { global: { statements: 70, branches: 50, functions: 50, lines: 70 } },
+  
+  
 };

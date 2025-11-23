@@ -1,0 +1,462 @@
+openapi: 3.0.3
+info:
+  title: Room Service API
+  version: 1.0.0
+  description: |
+    # API de Gerenciamento de Quartos
+    
+    Esta API permite o gerenciamento completo de quartos de hotel.
+    
+    ## Recursos
+    - Criação, listagem, atualização e remoção de quartos
+    - Controle de status (disponível, ocupado, manutenção)
+    - Autenticação JWT
+    - Controle de permissões por role
+
+    ## Autenticação JWT
+    1. Todas as rotas protegidas exigem um token JWT no header:
+       - `Authorization: Bearer <token>`
+    2. Para obter o token, faça login através do **API Gateway** (endpoint do Auth exposto pelo gateway):
+       ```http
+       POST http://localhost:3005/api/login
+       Content-Type: application/json
+       {
+         "username": "seu_usuario",
+         "password": "sua_senha"
+       }
+       ```
+    3. O serviço Auth irá retornar:
+       ```json
+       {
+         "token": "<seu_token_jwt>"
+       }
+       ```
+    4. Utilize o token nas requisições:
+       ```http
+       Authorization: Bearer <seu_token_jwt>
+       ```
+    5. O token é válido para todos os serviços protegidos: Room, User, Reservation, Payment
+    6. Se não tiver usuário, crie um pelo serviço User: `POST /users`
+    
+    ## Regras de Negócio
+    - Para criar um quarto (`POST /rooms`), o usuário deve possuir a role **admin** ou **receptionist**.
+    - Usuários com outras roles não têm permissão para criar quartos.
+    - Para outras operações, consulte as regras específicas de cada endpoint.
+contact:
+  name: Suporte API
+  email: api@hotel.com
+license:
+  name: MIT
+  url: https://opensource.org/licenses/MIT
+tags:
+  - name: Quartos
+    description: Operações de gerenciamento de quartos
+  - name: Status
+    description: Operações relacionadas ao status dos quartos
+servers:
+  - url: http://localhost:3005/api
+    description: API Gateway (rotas expostas em `/api`)
+security:
+  - BearerAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único do quarto
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        number:
+          type: integer
+          description: Número do quarto
+          example: 101
+          minimum: 1
+        type:
+          type: string
+          description: Tipo do quarto
+          enum: [single, double, suite, presidential]
+          example: "double"
+        capacity:
+          type: integer
+          description: Capacidade máxima de hóspedes
+          example: 2
+          minimum: 1
+          maximum: 10
+        price:
+          type: number
+          format: double
+          description: Preço da diária em reais
+          example: 250.00
+          minimum: 0
+        status:
+          type: string
+          description: Status atual do quarto
+          enum: [available, occupied, maintenance, cleaning]
+          default: available
+          example: "available"
+      required: [number, type, capacity, price]
+    RoomInput:
+      type: object
+      properties:
+        number:
+          type: integer
+          example: 101
+        type:
+          type: string
+          enum: [single, double, suite, presidential]
+          example: "double"
+        capacity:
+          type: integer
+          example: 2
+        price:
+          type: number
+          example: 250.00
+      required: [number, type, capacity, price]
+    StatusUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [available, occupied, maintenance, cleaning]
+          example: "available"
+      required: [status]
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Quarto não encontrado"
+        message:
+          type: string
+          example: "O quarto com ID especificado não existe"
+        statusCode:
+          type: integer
+          example: 404
+paths:
+  /api/rooms:
+    post:
+      tags: [Quartos]
+      summary: Criar quarto
+      description: Cria um novo quarto. Requer token JWT de admin ou recepcionista.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomInput'
+            examples:
+              quarto-simples:
+                summary: Quarto Simples
+                value:
+                  number: 101
+                  type: "single"
+                  capacity: 1
+                  price: 150.00
+              suite:
+                summary: Suíte Dupla
+                value:
+                  number: 305
+                  type: "suite"
+                  capacity: 4
+                  price: 500.00
+      responses:
+        '201':
+            description: ✅ Quarto criado com sucesso
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    number:
+                      type: integer
+                      example: 101
+                    type:
+                      type: string
+                      example: standard
+                    capacity:
+                      type: integer
+                      example: 1
+                    price:
+                      type: integer
+                      example: 150
+                    status:
+                      type: string
+                      example: free
+                    maintenance:
+                      type: boolean
+                      example: false
+                    _id:
+                      type: string
+                      example: "6921cf66b12e6ec3af74b26f"
+                    createdAt:
+                      type: string
+                      format: date-time
+                      example: "2025-11-22T14:57:42.623Z"
+                    updatedAt:
+                      type: string
+                      format: date-time
+                      example: "2025-11-22T14:57:42.623Z"
+                    __v:
+                      type: integer
+                      example: 0
+                    id:
+                      type: string
+                      example: "6921cf66b12e6ec3af74b26f"
+                example:
+                  number: 101
+                  type: standard
+                  capacity: 1
+                  price: 150
+                  status: free
+                  maintenance: false
+                  _id: "6921cf66b12e6ec3af74b26f"
+                  createdAt: "2025-11-22T14:57:42.623Z"
+                  updatedAt: "2025-11-22T14:57:42.623Z"
+                  __v: 0
+                  id: "6921cf66b12e6ec3af74b26f"
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão (requer role admin ou receptionist)
+    get:
+      tags: [Quartos]
+      summary: Listar quartos
+      description: Lista todos os quartos com possibilidade de filtros
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filtrar por status
+          schema:
+            type: string
+            enum: [available, occupied, maintenance, cleaning]
+        - name: type
+          in: query
+          description: Filtrar por tipo
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Número máximo de resultados
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          description: Pular N resultados
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Lista de quartos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+
+  /api/rooms/{id}:
+    get:
+      tags: [Quartos]
+      summary: Obter quarto por ID
+      description: Retorna detalhes de um quarto. Requer token JWT.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalhes do quarto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '404':
+          description: Quarto não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags: [Quartos]
+      summary: Atualizar quarto
+      description: Atualiza dados do quarto. Requer token JWT de admin.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomInput'
+      responses:
+        '200':
+          description: Quarto atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão (requer role admin)
+        '404':
+          description: Quarto não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags: [Quartos]
+      summary: Remover quarto
+      description: Remove um quarto. Requer token JWT de admin.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Quarto removido
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão (requer role admin)
+        '404':
+          description: Quarto não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/rooms/{id}/status:
+    patch:
+      tags: [Status]
+      summary: Atualizar status do quarto
+      description: Atualiza status do quarto. Requer token JWT de admin ou recepcionista.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdate'
+      responses:
+        '200':
+          description: Status atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/rooms/{id}/maintenance:
+    patch:
+      tags: [Status]
+      summary: Marcar quarto como manutenção
+      description: Marca quarto como em manutenção. Requer token JWT de admin ou recepcionista.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Quarto atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão (requer role admin ou receptionist)
+        '404':
+          description: Quarto não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/rooms/{id}/available:
+    patch:
+      tags: [Status]
+      summary: Marcar quarto como disponível
+      description: Marca quarto como disponível. Requer token JWT de admin ou recepcionista.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Quarto atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão (requer role admin ou receptionist)
+        '404':
+          description: Quarto não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

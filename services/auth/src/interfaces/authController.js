@@ -1,3 +1,15 @@
+
+
+
+
+
+
+
+
+
+
+
+
 import Joi from 'joi';
 import { AuthService } from '../application/AuthService.js';
 import { JwtTokenService } from '../infrastructure/JwtTokenService.js';
@@ -23,7 +35,7 @@ const loginSchema = Joi.object({
     }),
 });
 
-// Dependências padrão (podem ser sobrescritas em testes)
+
 const defaultAuthService = new AuthService({
   userReader: new UserReader(),
   tokenService: new JwtTokenService(),
@@ -40,7 +52,7 @@ export const login = (authService = defaultAuthService) => async (req, res) => {
   const result = await authService.login(value.identifier, value.password);
   if (!result) return res.status(401).json({ erro: 'Credenciais inválidas' });
 
-  // Dispara evento de login sem aguardar retorno (não bloqueante)
+  
     try { await publishLogin(result.user.id, result.user.username); } catch {}
     return res.status(200).json({ mensagem: 'Login realizado com sucesso', token: result.token, usuario: result.user });
   } catch (err) {

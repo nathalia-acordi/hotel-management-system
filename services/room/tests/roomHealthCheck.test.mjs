@@ -1,7 +1,7 @@
 import request from 'supertest';
 import express from 'express';
 
-// Simula o app do Room Service
+
 const app = express();
 app.get('/', (req, res) => {
   res.send('Room Service running');

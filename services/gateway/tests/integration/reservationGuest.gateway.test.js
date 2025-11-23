@@ -1,5 +1,5 @@
-// reservationGuest.gateway.test.js
-// Teste migrado do antigo integration: cadastro e consulta de hóspedes via gateway
+
+
 import axios from 'axios';
 
 describe('Cadastro e consulta de hóspedes (via gateway)', () => {

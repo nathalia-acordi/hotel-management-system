@@ -11,4 +11,12 @@ if [ -z "$MONGODB_URI" ]; then
   exit 1
 fi
 
+# Debug: mascarar credenciais e exibir host alvo
+_mask_uri() {
+  # Remove credenciais para log (user:pass@)
+  echo "$1" | sed -E 's#(mongodb\+srv://)[^:]+:[^@]+@#\1****:****@#'
+}
+MASKED_URI=$(_mask_uri "$MONGODB_URI")
+echo "[ROOM] Conectando ao Mongo URI: $MASKED_URI" >&2
+
 exec "$@"

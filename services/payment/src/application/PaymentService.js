@@ -1,5 +1,5 @@
-// PaymentService.js
-// Camada de aplicação: regras de negócio e orquestração
+
+
 import axios from 'axios';
 import amqp from 'amqplib';
 import { PixDiscountStrategy, CardNoDiscountStrategy, CashDiscountStrategy } from '../domain/strategy/PaymentStrategy.js';
@@ -10,7 +10,9 @@ const allowedMethods = ['cartao', 'pix', 'dinheiro'];
 export class PaymentService {
   constructor(paymentRepository) {
     this.paymentRepository = paymentRepository;
-    this.setupRabbitMQ();
+    if (process.env.NODE_ENV !== 'test') {
+      this.setupRabbitMQ();
+    }
   }
 
   async setupRabbitMQ() {
@@ -50,11 +52,14 @@ export class PaymentService {
 
   async createPayment(data) {
     const { reservationId, amount, method, status } = data;
-    // Validação
+    
     if (reservationId == null || amount == null || method == null) {
       return { status: 400, body: { error: 'reservationId, amount e method são obrigatórios' } };
     }
-    if (typeof reservationId !== 'number' || reservationId <= 0 || !Number.isInteger(reservationId)) {
+    
+    const isNumericId = typeof reservationId === 'number' && Number.isInteger(reservationId) && reservationId > 0;
+    const isStringId = typeof reservationId === 'string' && reservationId.trim() !== '';
+    if (!isNumericId && !isStringId) {
       return { status: 400, body: { error: 'reservationId inválido' } };
     }
     if (typeof amount !== 'number' || amount <= 0) {
@@ -63,10 +68,10 @@ export class PaymentService {
     if (!allowedMethods.includes(method)) {
       return { status: 400, body: { error: 'Método de pagamento inválido. Use: cartao, pix ou dinheiro.' } };
     }
-    if (this.paymentRepository.findByReservationAndMethod(reservationId, method)) {
+    if (await this.paymentRepository.findByReservationAndMethod(reservationId, method)) {
       return { status: 400, body: { error: 'Pagamento já registrado para esta reserva e método.' } };
     }
-    // Cria objeto de pagamento
+    
     const payment = {
       reservationId,
       amount,
@@ -74,8 +79,8 @@ export class PaymentService {
       status: status || 'pendente',
       createdAt: new Date().toISOString()
     };
-    this.paymentRepository.add(payment);
-    // Se status for "pago", aplicar desconto e atualizar reserva
+    await this.paymentRepository.add(payment);
+    
     if ((status || 'pendente') === 'pago') {
       try {
         let strategy;

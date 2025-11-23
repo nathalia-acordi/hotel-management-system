@@ -1,5 +1,5 @@
-// reportsReservation.gateway.test.js
-// Teste migrado do antigo integration: relatórios e consultas de reservas via gateway
+
+
 import axios from 'axios';
 
 describe('Relatórios e consultas (via gateway)', () => {
@@ -8,7 +8,7 @@ describe('Relatórios e consultas (via gateway)', () => {
   let reservation1, reservation2;
 
   beforeAll(async () => {
-    // Cadastra usuários e obtém tokens via gateway
+    
   const adminUsername = `admin2_${Date.now()}`;
   const recepUsername = `recep2_${Date.now()}`;
   const userUsername = `user2_${Date.now()}`;
@@ -20,7 +20,7 @@ describe('Relatórios e consultas (via gateway)', () => {
   recepToken = (await axios.post(`${GATEWAY_URL}/login`, { username: recepUsername, password: '123456' })).data.token;
   userToken = (await axios.post(`${GATEWAY_URL}/login`, { username: userUsername, password: '123456' })).data.token;
 
-    // Cadastra hóspedes via gateway
+    
     async function getOrCreateGuest(name, document, email, phone) {
       try {
         return (await axios.post(`${GATEWAY_URL}/guests`, { name, document, email, phone }, {
@@ -28,7 +28,7 @@ describe('Relatórios e consultas (via gateway)', () => {
         })).data;
       } catch (err) {
         if (err.response && err.response.status === 409) {
-          // Já existe, buscar pelo documento
+          
           const all = (await axios.get(`${GATEWAY_URL}/guests`, {
             headers: { Authorization: `Bearer ${recepToken}` }
           })).data;
@@ -41,7 +41,7 @@ describe('Relatórios e consultas (via gateway)', () => {
     const guest2 = await getOrCreateGuest('Hóspede 2', '222', 'h2@ex.com', '2222');
     const guest3 = await getOrCreateGuest('Hóspede 3', '333', 'h3@ex.com', '3333');
 
-    // Cria duas reservas pagas e uma pendente via gateway
+    
     const res1 = await axios.post(`${GATEWAY_URL}/reservations`, {
       userId: 1,
       roomId: 401,

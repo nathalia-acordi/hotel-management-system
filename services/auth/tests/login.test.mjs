@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { jest, describe, it, expect } from '@jest/globals';
 
-// Faz mock antes de importar createApp
+
 jest.unstable_mockModule('../src/application/UserReader.js', () => ({
   default: class MockUserReader {
     async findByEmailOrUsername(identifier) {

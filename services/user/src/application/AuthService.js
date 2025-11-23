@@ -8,10 +8,10 @@ export class AuthService {
 
   validateRole(token, roles) {
     try {
-  // Evite logar tokens brutos por razões de segurança
+  
       const actualToken = token?.startsWith('Bearer ') ? token.slice(7) : token;
       const decoded = jwt.verify(actualToken, this.secret);
-  // Não faça log do payload decodificado para evitar vazamento de dados pessoais (PII)
+  
       const allowed = roles.includes(decoded.role);
       if (allowed) {
         return { valid: true, isValid: true, user: decoded, status: 200 };

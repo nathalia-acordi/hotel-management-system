@@ -1,3 +1,11 @@
+
+
+
+
+
+
+
+
 import mongoose from 'mongoose';
 import { IRoomRepository } from '../domain/IRoomRepository.js';
 import { HttpError } from '../application/HttpError.js';
@@ -20,7 +28,7 @@ export class MongoRoomRepository extends IRoomRepository {
       const newRoom = new RoomModel(room);
       const savedRoom = await newRoom.save();
       console.log('[MongoRoomRepository] Quarto criado com sucesso:', { id: savedRoom._id, number: savedRoom.number });
-      return { ...savedRoom.toObject(), id: savedRoom._id }; // Retorna 'id' em vez de '_id'
+      return { ...savedRoom.toObject(), id: savedRoom._id }; 
     } catch (error) {
       console.error('[MongoRoomRepository] Erro ao criar quarto:', error.message);
       if (error.code === 11000) {
@@ -116,7 +124,7 @@ export class MongoRoomRepository extends IRoomRepository {
       const updatedRoom = await RoomModel.findByIdAndUpdate(
         objectId,
         { status },
-        { new: true, runValidators: true } // Ensure validators are run
+        { new: true, runValidators: true } 
       );
       if (!updatedRoom) {
         console.error('[MongoRoomRepository] Quarto não encontrado:', id);

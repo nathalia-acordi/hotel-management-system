@@ -1,5 +1,5 @@
-// InMemoryPaymentRepository.js
-// Implementação concreta do PaymentRepository (SRP, DIP)
+
+
 import { PaymentRepository } from '../domain/PaymentRepository.js';
 
 export class InMemoryPaymentRepository extends PaymentRepository {

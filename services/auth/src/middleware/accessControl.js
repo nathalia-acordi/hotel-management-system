@@ -1,7 +1,19 @@
+
+
+
+
+
+
+
+
+
+
+
+
 import { hasPermission } from '../domain/permissions.js';
 import { verify } from '../infrastructure/tokenAdapter.js';
 
-// Middleware de controle de acesso
+
 export function accessControl(action) {
   return (req, res, next) => {
     try {

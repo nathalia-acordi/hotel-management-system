@@ -1,6 +1,8 @@
 
 # 🏨 Hotel Management System
 
+Este repositório contém um conjunto de microsserviços orquestrados por um API Gateway. Para uma visão detalhada da arquitetura, comunicação, princípios SOLID, padrões de projeto e estratégia de testes, consulte:
+
 <a href="https://nodejs.org/" target="_blank"><img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js"/></a>
 <a href="https://expressjs.com/" target="_blank"><img src="https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express.js"/></a>
 <a href="https://www.docker.com/" target="_blank"><img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/></a>
@@ -20,13 +22,10 @@
 <br>
   <br/>
 
-  <img src="https://img.shields.io/badge/User%20Tests-95%25-4caf50?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="User Test Coverage"/>
-  <img src="https://img.shields.io/badge/Room%20Tests-83%25-4caf50?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="Room Test Coverage"/>
-  <img src="https://img.shields.io/badge/Payment%20Tests-83%25-4caf50?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="Payment Test Coverage"/>
-  <img src="https://img.shields.io/badge/Reservation%20Tests-56%25-f44336?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="Reservation Test Coverage"/>
+  <img src="https://img.shields.io/badge/Tests-Jest%20%2B%20Supertest-4caf50?style=for-the-badge&labelColor=222&logo=jest&logoColor=white" alt="Jest + Supertest"/>
+  <img src="https://img.shields.io/badge/Messaging-RabbitMQ-ff6600?style=for-the-badge&labelColor=222&logo=rabbitmq&logoColor=white" alt="RabbitMQ"/>
 
 </div>
-
 
 </div>
 
@@ -43,17 +42,51 @@
 - Relatórios de ocupação, faturamento e auditoria
 - Comunicação entre microsserviços via REST e eventos assíncronos (RabbitMQ)
 - Arquitetura limpa, SOLID e padrões GoF aplicados
-- Alta cobertura de testes unitários, integração e end-to-end (executáveis via Docker)
+- Testes unitários e de integração por serviço; cobertura em `docs/arquitetura.md`
 
 ## Estrutura do Projeto
 
 ```text
 hotel-management-system/
 ├── services/           # Microsserviços (user, auth, room, reservation, payment, gateway)
-├── integration/        # Testes de integração entre microsserviços
+│   └── .../tests/      # Cada serviço contém seus próprios testes (unit/integration)
 ├── docker-compose.yml  # Orquestração dos serviços e mensageria (sem Mongo container)
 └── README.md           # Este guia
 ```
+
+## Executando (resumo)
+
+PowerShell (Windows):
+
+```powershell
+docker compose up -d --build
+```
+
+Testes no gateway dentro do container:
+
+```powershell
+docker compose exec gateway npm test -- --testPathPattern=gatewayHealth.test.js
+docker compose exec gateway npm test
+```
+
+## Rodando Localmente (sem Docker)
+
+Quando quiser focar em um único serviço localmente (PowerShell):
+
+```powershell
+# 1) Defina variáveis locais (ou crie .env.local na raiz)
+$env:MONGODB_URI = "mongodb+srv://<usuario>:<senha>@<cluster>/<db>?retryWrites=true&w=majority"
+$env:JWT_SECRET = "altere_este_valor_no_seu_ambiente"
+$env:RABBITMQ_URL = "amqp://localhost:5672"  # opcional, somente se usar mensageria local
+
+# 2) Suba o serviço desejado
+cd services/user; npm install; npm start
+```
+
+Observações:
+- Em DEV não há container de Mongo; use uma URI do Atlas.
+- Para mensageria local, suba um RabbitMQ local ou rode `docker compose up rabbitmq`.
+- O API Gateway depende dos demais serviços para responder às rotas proxy.
 
 ## 🏗️ Microsserviços
 
@@ -66,7 +99,7 @@ hotel-management-system/
 | **payment** | Processa pagamentos, aplica descontos (Strategy), valida status e registra transações. |
 | **auth** | Autenticação, geração/validação de JWT, login e integração com User. |
 
-## 🗂️ Status dos Serviços
+## 🗂️ Status dos Serviços (Docker)
 
 | Serviço      | Porta Host -> Container | Endpoint Principal         | Status |
 |--------------|--------------------------|----------------------------|--------|
@@ -103,23 +136,208 @@ hotel-management-system/
 - Docker: cada microserviço em seu container; orquestração via `docker-compose.yml`.
 - Mensageria: RabbitMQ para eventos e comunicação assíncrona (amqplib).
 
-## 🧰 Requisitos
+## 📈 Diagramas 
 
-- Windows 10/11 com PowerShell 5.1+
-- Docker Desktop 4.x com Docker Compose
-- Node.js 20 LTS (opcional para rodar testes localmente por serviço)
-- Conta/URI do MongoDB Atlas (sem container de Mongo em DEV)
+### Visão Geral (Arquitetura)
+
+```mermaid
+graph LR
+  A[Cliente / Postman] -->|HTTP| G[API Gateway]
+
+  subgraph Services
+    U[User]
+    AU[Auth]
+    R[Room]
+    RS[Reservation]
+    P[Payment]
+  end
+
+  G -->|/register, /self-register| U
+  G -->|/login| AU
+  G -->|/api/users| U
+  G -->|/api/rooms| R
+  G -->|/api/reservations| RS
+  G -->|/api/payments| P
+
+  subgraph Infra
+    MQ[(RabbitMQ)]
+    DB[(MongoDB)]
+  end
+
+  U <-->|CRUD| DB
+  R <-->|CRUD| DB
+  RS <-->|CRUD| DB
+
+  U -- user.created --> MQ
+  AU -- login events --> MQ
+  P -- payment.completed --> MQ
+  RS -.consumes events.- MQ
+
+  classDef svc fill:#0ea5e9,stroke:#0369a1,color:#fff;
+  classDef infra fill:#94a3b8,stroke:#334155,color:#111827;
+  class U,AU,R,RS,P svc;
+  class MQ,DB infra;
+```
+
+### Gateway — Roteamento e Autenticação
+
+```mermaid
+sequenceDiagram
+  participant C as Cliente
+  participant G as Gateway
+  participant S as Serviço
+
+  Note over G: Rotas públicas: /login, /register, /self-register, /api/payments/health
+  Note over G: Rotas protegidas: /api/* (JWT obrigatório)
+
+  C->>G: GET /api/payments/health
+  G-->>C: 200 OK (proxy para Payment /health)
+
+  C->>G: POST /login {identifier,password}
+  G->>S: Auth /login
+  S-->>G: 200 {token}
+  G-->>C: 200 {token}
+
+  C->>G: GET /api/rooms (Authorization: Bearer ...)
+  G->>G: authenticateJWT + authorizeRoles
+  G->>S: proxy para Room
+  S-->>G: 200 ...
+  G-->>C: 200 ...
+```
+
+### Auth — Login e Emissão de JWT
+
+```mermaid
+sequenceDiagram
+  participant C as Cliente
+  participant G as Gateway
+  participant A as Auth (Interfaces)
+  participant AS as AuthService (Application)
+  participant UR as UserReader
+  participant PH as PasswordHasher
+  participant JT as JwtTokenService
+  participant MQ as RabbitMQ
+
+  C->>G: POST /login {identifier,password}
+  G->>A: /login
+  A->>AS: login(identifier, password)
+  AS->>UR: findByEmailOrUsername(...)
+  UR-->>AS: user
+  AS->>PH: compare(password, user.passwordHash)
+  PH-->>AS: ok
+  AS->>JT: sign(claims)
+  JT-->>AS: token
+  AS->>MQ: publish login (não bloqueante)
+  AS-->>A: {token, user}
+  A-->>G: 200 {token}
+  G-->>C: 200 {token}
+```
+
+### User — Auto Cadastro (Self-Register)
+
+```mermaid
+sequenceDiagram
+  participant C as Cliente
+  participant G as Gateway
+  participant U as User (Interfaces)
+  participant V as Joi Validator
+  participant S as UserService (Application)
+  participant R as UserRepository (Mongo)
+  participant H as PasswordHasher
+  participant MQ as RabbitMQ
+
+  C->>G: POST /self-register {username,email,document,phone,password}
+  G->>U: /self-register
+  U->>V: validate(payload)
+  V-->>U: ok
+  U->>H: hash(password)
+  H-->>U: passwordHash
+  U->>S: createUser(...)
+  S->>R: save(user)
+  R-->>S: userId
+  S->>MQ: publish user.created
+  U-->>G: 201 Created (sem expor hash)
+  G-->>C: 201 Created
+```
+
+### Room — Criação de Quarto (Protegido)
+
+```mermaid
+sequenceDiagram
+  participant C as Cliente (admin/receptionist)
+  participant G as Gateway
+  participant R as Room (Interfaces)
+  participant A as Auth Middleware
+  participant S as RoomService (Application)
+  participant M as MongoRoomRepository
+  participant DB as MongoDB
+
+  C->>G: POST /api/rooms {payload}
+  G->>A: authenticateJWT + authorizeRoles
+  A-->>G: ok
+  G->>R: /rooms
+  R->>S: createRoom(payload)
+  S->>M: persist(value)
+  M->>DB: insertOne
+  DB-->>M: _id
+  M-->>S: room
+  S-->>R: 201 room
+  R-->>G: 201 room
+  G-->>C: 201 room
+```
+
+### Reservation — Health e Consumer de Eventos
+
+```mermaid
+sequenceDiagram
+  participant RS as Reservation
+  participant DB as MongoDB
+  participant MQ as RabbitMQ
+
+  Note over RS: /health retorna estado do Mongo e RabbitMQ
+  RS->>DB: ping/driver state
+  MQ-->>RS: user.created (consumer startUserCreatedConsumer)
+  RS->>DB: atualizações relacionadas à reserva (quando aplicável)
+```
+
+### Payment — Criação e Descontos (Strategy)
+
+```mermaid
+sequenceDiagram
+  participant C as Cliente
+  participant G as Gateway
+  participant P as Payment (Interfaces)
+  participant S as PaymentService (Application)
+  participant Repo as InMemoryPaymentRepository
+  participant Strat as Strategy (pix/cartao/dinheiro)
+  participant MQ as RabbitMQ
+
+  C->>G: POST /api/payments {reservationId, amount, method, status}
+  G->>P: /payments (JWT ok)
+  P->>S: createPayment(data)
+  S->>S: validações (campos, duplicidade)
+  S->>Repo: add(payment)
+  alt status == "pago"
+    S->>Strat: calculate(amount)
+    Strat-->>S: finalAmount
+    S->>MQ: publish payment.completed
+  end
+  S-->>P: {status:201, body}
+  P-->>G: 201
+  G-->>C: 201 (payment)
+```
 
 ## 🔑 Variáveis de ambiente
 
 Crie um arquivo `.env.local` na raiz (baseado em `.env.local.sample`) com:
 
-```
+```ini
 MONGODB_URI=mongodb+srv://<usuario>:<senha>@<cluster>/<database>?retryWrites=true&w=majority
 JWT_SECRET=altere_este_valor_no_seu_ambiente
 ```
 
 Observações:
+
 - Não usamos container de Mongo; a URI deve ser do Atlas.
 - RabbitMQ é fornecido pelo docker compose; entre containers use `amqp://rabbitmq`.
 - Em DEV há fallback de JWT_SECRET no compose, mas recomendo definir no `.env.local`.
@@ -137,12 +355,14 @@ docker compose up --build
 ```
 
 Após os health checks ficarem verdes:
-- Gateway: http://localhost:3005
-- RabbitMQ UI: http://localhost:15672 (guest/guest)
+
+- Gateway: <http://localhost:3005>
+- RabbitMQ UI: <http://localhost:15672> (guest/guest)
 
 ## 🧭 Fluxo rápido (via API Gateway)
 
 Endpoints principais do gateway:
+
 - POST /register -> User Service
 - POST /login -> Auth Service
 - GET /validate -> valida JWT (Auth)
@@ -190,211 +410,41 @@ npm test
 ```
 
 Notas:
+
 - Testes usam ESM/Jest; alguns serviços têm setupFilesAfterEnv.
 - Logs ruidosos sanitizados; erros em pt-BR.
 
-## 📋 Requisitos do Sistema — Casos de Uso
+### Cobertura por Serviço (Windows)
 
-<details>
-<summary><b>UC01 — Auto-cadastro de Hóspede</b></summary>
+Use os comandos abaixo em cada pasta `services/<nome>`:
 
-**Ator Primário:** Hóspede
+```powershell
+# auth
+cd services/auth; npm install; npm run coverage
 
-**Fluxo Principal:**
-1. Hóspede acessa o endpoint `/register` do User Service.
-2. Informa dados obrigatórios (nome, e-mail, documento, senha, etc).
-3. Sistema valida:
-  - Formato de e-mail, CPF/RG, telefone.
-  - Unicidade de e-mail e documento.
-  - Senha mínima e hash.
-4. Sistema publica evento `user.created` no RabbitMQ.
-5. Hóspede recebe confirmação de cadastro.
+# user
+cd services/user; npm install; npm run coverage
 
-**Fluxos Alternativos:**
-- 2a. Dados obrigatórios ausentes: sistema retorna erro 400.
-- 3a. Documento ou e-mail já cadastrado: sistema retorna erro 409.
-- 3b. Formato inválido: sistema retorna erro 400.
+# room
+cd services/room; npm install; npm run coverage
 
-**Regras de Negócio:**
-- Apenas hóspedes podem usar este fluxo.
-- Não é permitido auto-cadastro com e-mail ou documento já cadastrado.
-- Senha nunca é retornada nem armazenada em texto puro.
-- Evento de criação é publicado para integração com outros serviços.
+# reservation
+cd services/reservation; npm install; node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.mjs --coverage
 
-</details>
+# payment
+cd services/payment; npm install; npm test   # já inclui --coverage no script
 
-<details>
-<summary><b>UC02 — Cadastro de Hóspede por Admin/Receptionist</b></summary>
+# gateway
+cd services/gateway; npm install; node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config=jest.config.mjs --coverage
+```
 
-**Ator Primário:** Receptionist/Admin
-
-**Fluxo Principal:**
-1. Admin/Receptionist acessa endpoint `/users` (POST) autenticado.
-2. Informa dados do hóspede.
-3. Sistema valida, cria conta e publica evento `user.created`.
-4. Recebe confirmação.
-
-**Fluxos Alternativos:**
-- 2a. Dados inválidos: sistema retorna erro 400.
-- 3a. Documento já cadastrado: sistema retorna erro 409.
-
-**Regras de Negócio:**
-- JWT obrigatório para endpoints protegidos.
-- Senha armazenada com hash.
-
-</details>
-
-<details>
-<summary><b>UC04 — Gerenciamento de Quartos</b></summary>
-
-**Ator Primário:** Admin/Receptionist
-
-**Fluxo Principal:**
-1. Acessa `/rooms` autenticado.
-2. Cria, edita ou remove quartos.
-3. Sistema valida:
-  - Número único por quarto.
-  - Preço positivo.
-  - Tipo válido (RoomFactory).
-4. Confirmação.
-
-**Fluxos Alternativos:**
-- 2a. Remover quarto ocupado: erro 400.
-- 2b. Número duplicado: erro 400.
-- 2c. Preço ≤ 0: erro 400.
-
-**Regras de Negócio:**
-- Apenas admin/receptionist gerenciam quartos (JWT).
-- Integridade de quartos ocupados preservada.
-- Factory Pattern para criação de instâncias.
-
-</details>
-
-<details>
-<summary><b>UC05 — Reservas</b></summary>
-
-**Ator Primário:** Receptionist/Admin
-
-**Fluxo Principal:**
-1. Acessa `/reservations` autenticado.
-2. Informa dados (hóspede, quarto, datas).
-3. Sistema valida:
-  - Campos obrigatórios e tipos.
-  - Datas válidas (checkIn < checkOut).
-  - Disponibilidade do quarto (sem overbooking).
-  - guestId pode ser diferente de userId (reserva para terceiros).
-4. Confirmação.
-
-**Fluxos Alternativos:**
-- 3a. Quarto indisponível: erro 400.
-- 2a. Dados inválidos: erro 400.
-- 5a. Cancelamento após check-in/out: erro 400.
-- 5b. Usuário comum tentando criar/cancelar: erro 403.
-
-**Regras de Negócio:**
-- Apenas receptionist/admin criam/cancelam/alteram (JWT).
-- Sem overbooking.
-- Cancelamento só antes do check-in.
-- Não cancelar reserva finalizada.
-- guestId ≠ userId permitido.
-- Eventos publicados.
-
-</details>
-
-<details>
-<summary><b>UC06 — Pagamento de Reserva</b></summary>
-
-**Ator Primário:** Receptionist/Admin
-
-**Fluxo Principal:**
-1. Acessa `/payments` autenticado.
-2. Informa reserva e dados do pagamento.
-3. Sistema valida:
-  - Reserva existe e está confirmada.
-  - Valor positivo.
-  - Método aceito (cartao, pix, dinheiro).
-  - Não pode pagar reserva já paga.
-4. Aplica Strategy de descontos.
-5. Publica evento.
-6. Confirmação.
-
-**Fluxos Alternativos:**
-- 2a. Pagamento duplicado: erro 400.
-- 2b. Reserva não confirmada: rejeita.
-- 2c. Valor inválido: erro 400.
-- 2d. Método inválido: erro 400.
-
-**Regras de Negócio:**
-- Só reservas confirmadas podem ser pagas.
-- Apenas um pagamento por reserva.
-- Strategy Pattern para descontos.
-- Integração com gateway pode ser simulada.
-- Eventos publicados.
-
-</details>
-
-<details>
-<summary><b>UC07 — Check-in e Check-out</b></summary>
-
-**Ator Primário:** Receptionist/Admin
-
-**Fluxo Principal:**
-1. Acessa `/reservations/checkin` ou `/reservations/checkout` autenticado.
-2. Informa reserva.
-3. Validações:
-  - Check-in somente se reserva paga.
-  - Check-out somente após check-in.
-  - Não operar em reserva cancelada/finalizada.
-4. Publica eventos.
-5. Confirmação.
-
-**Fluxos Alternativos:**
-- 2a. Check-in sem pagamento: erro 400.
-- 2b. Check-out sem check-in: erro 400.
-- 2c. Usuário comum tentando operar: erro 403.
-
-**Regras de Negócio:**
-- Check-in apenas para reservas pagas.
-- Check-out após check-in.
-- Só receptionist/admin operam (JWT).
-- Eventos publicados.
-
-</details>
-
-<details>
-<summary><b>UC08 — Relatórios e Auditoria</b></summary>
-
-**Ator Primário:** Admin/Receptionist
-
-**Fluxo Principal:**
-1. Acessa `/reports` autenticado.
-2. Solicita relatório de reservas, pagamentos, ocupação ou faturamento.
-3. Sistema gera relatório filtrado (período, status, etc.).
-4. Recebe relatório.
-
-**Fluxos Alternativos:**
-- 2a. Usuário comum tentando acessar: erro 403.
-- 2b. Parâmetros inválidos: erro 400.
-
-**Regras de Negócio:**
-- Apenas admin/receptionist acessam (JWT).
-- Faturamento considera apenas reservas pagas e finalizadas.
-
-</details>
-
-## ✅ Boas práticas e decisões
-
-- Roles padronizadas em EN: admin, receptionist, guest (não traduzir no payload)
-- Mensagens e erros em pt-BR nos endpoints
-- Sem segredos em Dockerfiles; segredos via variáveis de ambiente
-- .gitignore/.dockerignore reforçados; não commitar `.env.local` nem pastas de cobertura
-- Health checks HTTP em todos os serviços; `/health` inclui status do Mongo e origem dos segredos em não-prod
-- Persistência real no MongoDB (user e room) via Mongoose; em DEV requer Atlas
+- Relatórios são gerados em `services/<nome>/coverage`.
+- Números consolidados e instruções detalhadas: veja `docs/arquitetura.md` (seção Testes e Cobertura).
 
 ## 🩺 Health e observabilidade
 
 - GET `/health` em cada serviço retorna JSON com status, uptime e (em dev) origem das variáveis de segredo.
-- RabbitMQ console: http://localhost:15672 (guest/guest).
+- RabbitMQ console: <http://localhost:15672> (guest/guest).
 
 ## 🛠️ Solução de problemas (FAQ rápido)
 
@@ -402,7 +452,11 @@ Notas:
 - 401/403 em rotas protegidas: confira `Authorization: Bearer <token>` e a role do usuário.
 - Porta em uso: ajuste as portas no `docker-compose.yml` ou pare processos locais.
 - RabbitMQ indisponível: aguarde o health check ficar verde; veja logs do serviço.
+- `cross-env` não encontrado: rode `npm install` no serviço antes dos testes.
+- `mongodb-memory-server` demorando no primeiro teste: é normal (download de binários do Mongo para testes).
 
 ## 🤝 Contribuição
 
 Contribuições são bem-vindas! Abra issues ou pull requests. Antes de enviar, rode os testes do serviço impactado.
+
+

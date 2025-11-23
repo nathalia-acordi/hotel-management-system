@@ -7,13 +7,17 @@ export function createApp(paymentService) {
   app.use(express.json());
   const controller = createPaymentController(paymentService);
 
-  // Health check mais robusto
+  
+  app.get('/', (req, res) => {
+    res.status(200).json({ status: 'ok', service: 'payment', message: 'Payment Service API' });
+  });
+
+  
   app.get('/health', async (req, res) => {
     try {
-      // Verifica conexão com RabbitMQ
+      
       const conn = await amqp.connect(process.env.RABBITMQ_URL || 'amqp://rabbitmq');
       await conn.close();
-      
       res.status(200).json({ 
         status: 'ok', 
         service: 'payment',

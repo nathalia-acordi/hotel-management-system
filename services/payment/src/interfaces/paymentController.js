@@ -1,14 +1,16 @@
-// paymentController.js
-// Controller responsável por orquestrar requisições HTTP relacionadas a pagamentos
-// Não contém lógica de negócio, apenas delega para o PaymentService
+
+
+
 
 export function createPaymentController(paymentService) {
   return {
     async createPayment(req, res) {
       try {
+        console.log('[PAYMENT][Controller] Body recebido:', req.body);
         const result = await paymentService.createPayment(req.body);
         res.status(result.status).json(result.body);
       } catch (err) {
+        console.error('[PAYMENT][Controller] Erro ao processar pagamento:', err);
         res.status(500).json({ erro: 'Erro interno ao processar pagamento' });
       }
     },

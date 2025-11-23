@@ -13,7 +13,7 @@ describe('reservationController PATCH /reservations/:id/amount', () => {
     global.__reservationRepository__ = repo;
     app = express();
     app.use(express.json());
-    // Mock middlewares de autenticação e papel
+    
     app.use(reservationController({
       authenticateJWT: (req, res, next) => next(),
       isRecepcionista: (req, res, next) => next(),

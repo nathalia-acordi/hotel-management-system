@@ -20,7 +20,7 @@ export async function startUserCreatedConsumer() {
           channel.ack(msg);
         } catch (error) {
           console.error(`[Reservation] Failed to process message:`, error);
-          channel.nack(msg, false, false); // Reject the message without requeueing
+          channel.nack(msg, false, false); 
         }
       }
     });
@@ -31,10 +31,10 @@ export async function startUserCreatedConsumer() {
 
     conn.on('close', () => {
       console.warn('[Reservation] RabbitMQ connection closed. Retrying...');
-      setTimeout(startUserCreatedConsumer, 5000); // Retry connection after 5 seconds
+      setTimeout(startUserCreatedConsumer, 5000); 
     });
   } catch (err) {
     console.error('[Reservation] Erro ao conectar no RabbitMQ:', err);
-    setTimeout(startUserCreatedConsumer, 5000); // Retry connection after 5 seconds
+    setTimeout(startUserCreatedConsumer, 5000); 
   }
 }

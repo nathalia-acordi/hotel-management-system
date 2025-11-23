@@ -1,4 +1,4 @@
-// Camada de Aplicação: UserService (ES Modules)
+
 export class UserService {
   static inProgress = new Set();
   constructor(userRepository, eventPublisher, passwordHasher) {
@@ -17,7 +17,7 @@ export class UserService {
 
   async createUser(user) {
     console.log('[USER SERVICE] Iniciando criação de usuário:', { ...user, password: '***' });
-  // Validações básicas; a camada de interface deve ter feito a validação detalhada
+  
     if (!user.username || typeof user.username !== 'string' || user.username.trim() === '') {
       const err = new Error('Username inválido');
       err.httpStatus = 400;
@@ -44,7 +44,7 @@ export class UserService {
       throw err;
     }
 
-  // Proteção contra concorrência e pré-checagem de duplicidade
+  
     const key = user.username.trim();
     if (UserService.inProgress.has(key)) {
       const err = new Error('Usuário já existe');
@@ -83,7 +83,7 @@ export class UserService {
     }
   }
 
-  // Deleta usuário por username, retornando booleano
+  
   async deleteUser(username) {
     if (!username || typeof username !== 'string' || username.trim() === '') {
       const err = new Error('Username inválido');
@@ -93,7 +93,7 @@ export class UserService {
     return await this.userRepository.deleteByUsername(username);
   }
 
-  // Utilitário estático para validar CPF
+  
   static isValidCPF(cpf) {
     if (!cpf || typeof cpf !== 'string') return false;
     const digits = cpf.replace(/\D/g, '');

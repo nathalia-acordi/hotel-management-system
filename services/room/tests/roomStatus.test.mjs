@@ -3,7 +3,7 @@ import { createApp } from '../src/index.mjs';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
-// Mock de middlewares para testar sem autenticação real
+
 const mockAuth = (req, res, next) => { req.user = { role: 'admin' }; next(); };
 const appMock = createApp({ authenticateJWT: mockAuth });
 
@@ -23,13 +23,13 @@ describe('Room Status and Maintenance', () => {
     roomId = res.body.id;
     console.log('[Test Setup] ID do quarto criado:', roomId);
 
-    // Verificar persistência no banco
+    
     const roomInDb = await mongoose.connection.db.collection('rooms').findOne({ _id: new mongoose.Types.ObjectId(roomId) });
     console.log('[Test Setup] Quarto persistido no banco:', roomInDb);
   });
 
   afterAll(async () => {
-  // Limpa o banco de dados
+  
     if (mongoose.connection.readyState) {
       await mongoose.connection.db.dropDatabase();
       await mongoose.connection.close();
@@ -68,7 +68,7 @@ describe('Room Status and Maintenance', () => {
   });
 
   it('should return 404 for non-existent room', async () => {
-  const nonExistentId = new mongoose.Types.ObjectId(); // Gera um ObjectId válido porém inexistente
+  const nonExistentId = new mongoose.Types.ObjectId(); 
     const res = await request(appMock)
       .patch(`/rooms/${nonExistentId}/status`)
       .send({ status: 'free' });

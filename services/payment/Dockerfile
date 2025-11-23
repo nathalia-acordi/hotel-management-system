@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+COPY src/swagger.yaml ./src/swagger.yaml
 
-# Permite rodar testes facilmente
-ARG TEST=false
-CMD if [ "$TEST" = "true" ]; then npm test; else node src/interfaces/server.js; fi
+# Sempre inicia o serviço pelo index.mjs
+CMD ["node", "src/index.mjs"]

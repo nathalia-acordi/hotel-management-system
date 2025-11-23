@@ -6,7 +6,7 @@ function readFromFileVar(varName) {
   try { return fs.readFileSync(filePath, 'utf8').trim(); } catch { return null; }
 }
 
-// Env-only by default; keep optional file support for JWT only if *_FILE explicitly provided
+
 export function getSecret(key, fileKey) {
   if (fileKey) {
     const fileVal = readFromFileVar(fileKey);

@@ -1,11 +1,12 @@
 import mongoose from 'mongoose';
 import { ReservationRepository } from '../domain/ReservationRepository.js';
 
-// Schema do MongoDB para Reservas
+
 const reservationSchema = new mongoose.Schema({
-  userId: { type: Number, required: true, index: true },
-  guestId: { type: Number, required: true, index: true },
-  roomId: { type: Number, required: true, index: true },
+  
+  userId: { type: mongoose.Schema.Types.Mixed, required: true, index: true },
+  guestId: { type: mongoose.Schema.Types.Mixed, required: true, index: true },
+  roomId: { type: mongoose.Schema.Types.Mixed, required: true, index: true },
   checkIn: { type: Date, required: true, index: true },
   checkOut: { type: Date, required: true, index: true },
   checkInStatus: { type: Boolean, default: false },
@@ -21,10 +22,10 @@ const reservationSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-// Índice composto para verificação de conflitos de reserva
+
 reservationSchema.index({ roomId: 1, checkIn: 1, checkOut: 1 });
 
-// Índice para buscas por status
+
 reservationSchema.index({ cancelled: 1, checkOutStatus: 1 });
 
 const ReservationModel = mongoose.model('Reservation', reservationSchema);
@@ -48,7 +49,7 @@ export class MongoReservationRepository extends ReservationRepository {
         roomId: savedReservation.roomId
       });
 
-      // Retorna objeto com 'id' em vez de '_id' para compatibilidade
+      
       return {
         ...savedReservation.toObject(),
         id: savedReservation._id.toString()
@@ -57,7 +58,17 @@ export class MongoReservationRepository extends ReservationRepository {
       console.error('[MongoReservationRepository] Erro ao salvar reserva:', error.message);
       
       if (error.name === 'ValidationError') {
-        const err = new Error('Dados de reserva inválidos');
+        
+        let details = error.message;
+        try {
+          if (error.errors && typeof error.errors === 'object') {
+            const parts = Object.values(error.errors).map(e => e && e.message).filter(Boolean);
+            if (parts.length) details = parts.join('; ');
+          }
+        } catch (e) {
+          
+        }
+        const err = new Error(`Dados de reserva inválidos: ${details}`);
         err.httpStatus = 400;
         throw err;
       }
@@ -70,12 +81,12 @@ export class MongoReservationRepository extends ReservationRepository {
     console.log('[MongoReservationRepository] Buscando reserva por ID:', id);
 
     try {
-      // Aceita tanto número quanto ObjectId
+      
       let query;
       if (mongoose.Types.ObjectId.isValid(id)) {
         query = { _id: id };
       } else {
-        // Se for número, busca por ID numérico (compatibilidade com in-memory)
+        
         query = { _id: new mongoose.Types.ObjectId(id) };
       }
 
@@ -136,7 +147,14 @@ export class MongoReservationRepository extends ReservationRepository {
       if (error.httpStatus) throw error;
       
       if (error.name === 'ValidationError') {
-        const err = new Error('Dados de reserva inválidos');
+        let details = error.message;
+        try {
+          if (error.errors && typeof error.errors === 'object') {
+            const parts = Object.values(error.errors).map(e => e && e.message).filter(Boolean);
+            if (parts.length) details = parts.join('; ');
+          }
+        } catch (e) {}
+        const err = new Error(`Dados de reserva inválidos: ${details}`);
         err.httpStatus = 400;
         throw err;
       }
@@ -175,9 +193,7 @@ export class MongoReservationRepository extends ReservationRepository {
     }
   }
 
-  /**
-   * Busca reservas ativas (não canceladas e não finalizadas)
-   */
+  
   async findActive() {
     console.log('[MongoReservationRepository] Buscando reservas ativas');
 
@@ -197,9 +213,7 @@ export class MongoReservationRepository extends ReservationRepository {
     }
   }
 
-  /**
-   * Verifica conflitos de reserva para um quarto em um período
-   */
+  
   async findConflicts(roomId, checkIn, checkOut, excludeId = null) {
     console.log('[MongoReservationRepository] Verificando conflitos:', {
       roomId,
@@ -234,9 +248,7 @@ export class MongoReservationRepository extends ReservationRepository {
     }
   }
 
-  /**
-   * Busca reservas por período
-   */
+  
   async findByDateRange(startDate, endDate) {
     console.log('[MongoReservationRepository] Buscando reservas por período:', {
       startDate,
@@ -259,9 +271,7 @@ export class MongoReservationRepository extends ReservationRepository {
     }
   }
 
-  /**
-   * Busca reservas por status de pagamento
-   */
+  
   async findByPaymentStatus(status) {
     console.log('[MongoReservationRepository] Buscando reservas por status de pagamento:', status);
 

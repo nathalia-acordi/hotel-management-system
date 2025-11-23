@@ -1,3 +1,12 @@
+
+
+
+
+
+
+
+
+
 import { UserRepositoryImpl } from '../infrastructure/UserRepository.js';
 import { publishEvent } from '../infrastructure/rabbitmq.js';
 import { UserService } from '../application/UserService.js';
@@ -5,7 +14,7 @@ import { registerSchema as baseRegisterSchema } from './dto/userSchemas.js';
 import { BcryptPasswordHasher } from '../infrastructure/passwordHasher.js';
 import { User } from '../domain/User.js';
 
-// Injeção de dependência (DIP)
+
 const userRepository = new UserRepositoryImpl();
 const passwordHasher = new BcryptPasswordHasher();
 const userService = new UserService(userRepository, publishEvent, passwordHasher);
@@ -13,7 +22,15 @@ const userService = new UserService(userRepository, publishEvent, passwordHasher
 export const validate = async (req, res) => {
   const { username, password } = req.body;
   const result = await userService.validateUser(username, password);
-  res.json(result);
+  if (result.valid) {
+    return res.status(200).json({ valid: true, message: "Credenciais válidas", id: result.id, role: result.role, username: result.username });
+  }
+  
+  return res.status(401).json({
+    error: "Unauthorized",
+    message: "Username ou senha incorretos",
+    statusCode: 401
+  });
 };
 
 const registerSchema = baseRegisterSchema;
@@ -28,18 +45,18 @@ export const register = async (req, res) => {
       return res.status(400).json({ erro: 'Dados inválidos', detalhes: error.details.map(d => d.message) });
     }
 
-  // sanitiza entradas
+  
   const username = value.username.trim();
   const email = value.email.trim().toLowerCase();
   const document = value.document.replace(/\D/g, '');
-  // Limpeza básica no formato E.164: mantém dígitos e + inicial opcional
+  
   const phone = value.phone.replace(/[^+\d]/g, '');
   const password = value.password;
   const role = value.role;
 
     console.log('[USER CONTROLLER] Dados validados com sucesso');
 
-  // Cria um objeto de domínio de usuário
+  
   const user = new User({ id: undefined, username, email, document, phone, password, role });
 
     const saved = await userService.createUser(user);

@@ -23,7 +23,7 @@ export class ReservationRepository {
     return this.reservations;
   }
 
-  // Para testes e lógica futura: liberar quartos cancelados
+  
   clear() {
     this.reservations = [];
   }

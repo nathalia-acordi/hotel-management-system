@@ -1,5 +1,5 @@
-// reservationOverbooking.gateway.test.js
-// Teste migrado do antigo integration: overbooking via gateway
+
+
 import axios from 'axios';
 
 describe('Overbooking de reservas (via gateway)', () => {
@@ -13,7 +13,7 @@ describe('Overbooking de reservas (via gateway)', () => {
   });
 
   it('não permite overbooking para o mesmo quarto e período', async () => {
-    // Cria primeira reserva
+    
   const res1 = await axios.post(`${GATEWAY_URL}/reservations`, {
       userId: 1,
       roomId: 501,
@@ -24,7 +24,7 @@ describe('Overbooking de reservas (via gateway)', () => {
     });
     expect(res1.status).toBe(201);
 
-    // Tenta criar segunda reserva para o mesmo quarto e período
+    
     await expect(
   axios.post(`${GATEWAY_URL}/reservations`, {
         userId: 2,

@@ -1,7 +1,16 @@
-import mongoose from 'mongoose';
-import { UserRepository as IUserRepository } from '../domain/UserRepository.js';
 
-// Define o esquema do usuário para o MongoDB
+
+
+
+
+
+
+
+
+import mongoose from 'mongoose';
+
+
+
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true, index: true },
@@ -12,17 +21,17 @@ const userSchema = new mongoose.Schema({
   active: { type: Boolean, default: true },
 }, { timestamps: true });
 
-// Garante que o índice exclusivo seja criado
+
 userSchema.index({ username: 1 }, { unique: true });
 
 const UserModel = mongoose.model('User', userSchema);
 
-// Implementação concreta do UserRepository usando MongoDB
-export class UserRepositoryImpl extends IUserRepository {
+
+export class UserRepositoryImpl {
   async save(user) {
     console.log('[USER REPOSITORY] Tentando salvar usuário:', { username: user?.username, email: user?.email, role: user?.role });
     try {
-      // Check for duplicates
+      
       const dup = await UserModel.findOne({ $or: [ { username: user.username }, { email: user.email }, { document: user.document } ] });
       if (dup) {
         const field = dup.email === user.email ? 'email' : (dup.document === user.document ? 'document' : 'username');
@@ -40,7 +49,7 @@ export class UserRepositoryImpl extends IUserRepository {
         message: error.message,
         stack: error.stack,
       });
-      // translate mongo duplicate key
+      
       if (error.code === 11000) {
         const err = new Error('Conflito: usuário já existe');
         err.httpStatus = 409;
@@ -67,7 +76,7 @@ export class UserRepositoryImpl extends IUserRepository {
 
   async getAll() {
     try {
-      return await UserModel.find({}, '-password'); // Exclui o campo de senha ao listar
+      return await UserModel.find({}, '-password'); 
     } catch (error) {
       throw error;
     }
@@ -87,7 +96,7 @@ export class UserRepositoryImpl extends IUserRepository {
   async updateByUsername(username, data) {
     console.log('[USER REPOSITORY] Atualizando usuário por username:', { username, fields: Object.keys(data || {}) });
     try {
-      // Nunca atualizar senha diretamente aqui
+      
       const { password, ...rest } = data || {};
       const updated = await UserModel.findOneAndUpdate({ username }, rest, { new: true, runValidators: true });
       if (!updated) {

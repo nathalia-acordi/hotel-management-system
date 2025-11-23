@@ -1,3 +1,6 @@
+
+
+
 import fs from 'fs';
 
 function readFromFileVar(varName) {
@@ -6,7 +9,7 @@ function readFromFileVar(varName) {
   try { return fs.readFileSync(filePath, 'utf8').trim(); } catch { return null; }
 }
 
-// Somente variáveis de ambiente por padrão; mantém suporte opcional a arquivo para JWT apenas se *_FILE for fornecido explicitamente
+
 export function getSecret(key, fileKey) {
   if (fileKey) {
     const fileVal = readFromFileVar(fileKey);

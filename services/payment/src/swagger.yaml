@@ -1,0 +1,83 @@
+openapi: 3.0.3
+info:
+  title: Payment Service API
+  version: 1.0.0
+  description: API para gerenciamento de pagamentos. Rotas podem exigir JWT conforme configuração.
+servers:
+  - url: http://localhost:3005/api
+    description: API Gateway (rotas expostas em `/api/payments`)
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        reservationId:
+          anyOf:
+            - type: integer
+            - type: string
+          description: Aceita ID numérico ou string (ObjectId). O sistema usa tipos mistos temporariamente; a recomendação é normalizar para strings ObjectId.
+        amount:
+          type: number
+        method:
+          type: string
+        status:
+          type: string
+      required: [reservationId, amount, method]
+paths:
+  /api/payments:
+    get:
+      summary: Listar pagamentos
+      description: Lista todos os pagamentos.
+      responses:
+        '200':
+          description: Lista de pagamentos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Payment'
+    post:
+      summary: Criar pagamento
+      description: Cria um novo pagamento.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payment'
+      responses:
+        '201':
+          description: Pagamento criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+
+  /api/payments/{id}/status:
+    get:
+      summary: Consultar status do pagamento
+      description: Consulta status do pagamento pelo ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status do pagamento
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string

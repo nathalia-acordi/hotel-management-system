@@ -1,0 +1,878 @@
+openapi: 3.0.3
+
+info:
+  title: User Service API
+  version: 1.0.0
+  description: |
+    # API de Gerenciamento de Usuários - Hotel System
+    
+    Esta API oferece gerenciamento completo de usuários para o sistema hoteleiro.
+    
+    ## Principais Recursos
+    
+    - Criação, listagem, atualização e remoção de usuários
+    - Autenticação via JWT
+    - Controle de permissões por roles (papéis)
+    - Auto-cadastro para hóspedes
+    
+    ---
+    
+    ## Autenticação JWT
+    
+    Todas as rotas protegidas exigem um token JWT no header de autorização.
+    
+    ### Como obter o token:
+    
+    1. Faça login através do **API Gateway** (endpoint do Auth exposto pelo gateway):
+       ```
+       POST http://localhost:3005/api/login
+       Content-Type: application/json
+
+       {
+         "identifier": "seu_usuario",
+         "password": "sua_senha"
+       }
+       ```
+    
+    2. O serviço retornará:
+       ```json
+       {
+         "token": "<seu_token_jwt>"
+       }
+       ```
+    
+    3. Use o token nas requisições:
+       ```
+       Authorization: Bearer <seu_token_jwt>
+       ```
+    
+    ### Importante
+    
+    - O token é válido para **todos os serviços**: User, Room, Reservation, Payment
+    - Se não tiver usuário, use o endpoint `POST /self-register` (sem autenticação)
+    - Ou peça para um admin/receptionist criar via `POST /register`
+    
+    ---
+    
+    ## Roles e Permissões
+    
+    ### Admin
+    - **Acesso total** ao sistema
+    - Pode criar, listar, atualizar e remover qualquer usuário
+    - Acesso a todos os relatórios administrativos
+    - Único role que pode gerenciar outros admins
+    
+    ### Receptionist (Recepcionista)
+    - Pode listar, criar e atualizar usuários (exceto admins)
+    - **Não pode** remover usuários ou criar admins
+    - Acesso às operações de hóspedes e reservas
+    - **Não tem** acesso a relatórios administrativos restritos
+    
+    ### Guest (Hóspede)
+    - Pode se auto-cadastrar via `POST /self-register`
+    - Pode visualizar e atualizar apenas o próprio perfil
+    - **Não tem** acesso a dados de outros usuários
+    - **Não tem** acesso a operações administrativas
+    
+    ---
+    
+    ## 📋 Regras de Negócio
+    
+    | Operação | Admin | Receptionist | Guest |
+    |----------|-------|--------------|-------|
+    | Listar usuários (`GET /users`) | Sim | Sim | Não |
+    | Auto-cadastro (`POST /self-register`) | Sim | Sim | Sim |
+    | Cadastrar usuário (`POST /register`) | Sim | Sim* | Não |
+    | Remover usuário (`DELETE /users/{username}`) | Sim | Não | Não |
+    | Ver próprio perfil | Sim | Sim | Sim |
+    | Relatórios (`GET /reports`) | Sim | Não | Não |
+    
+    **\*** Receptionist não pode criar usuários com role `admin`
+    
+  contact:
+    name: Suporte API
+    email: suporte@hotel.com
+
+servers:
+  - url: http://localhost:3005/api
+    description: API Gateway (rotas expostas em `/api`)
+
+tags:
+  - name: Usuários
+    description: Operações de gerenciamento de usuários (CRUD completo)
+  - name: Autenticação
+    description: Operações de registro e validação de credenciais
+  - name: Gestão
+    description: Operações de gerenciamento de reservas e quartos
+  - name: Relatórios
+    description: Relatórios administrativos e estatísticas (apenas admin)
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Token JWT obtido através do endpoint de login do Auth Service.
+        
+        Exemplo: `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+
+  schemas:
+    User:
+      type: object
+      required:
+        - username
+        - role
+        - email
+        - document
+        - phone
+      properties:
+        username:
+          type: string
+          description: Nome de usuário único no sistema
+          example: johndoe
+          minLength: 3
+          maxLength: 50
+        role:
+          type: string
+          description: Papel/função do usuário no sistema
+          enum:
+            - admin
+            - receptionist
+            - guest
+          example: guest
+        email:
+          type: string
+          format: email
+          description: Endereço de e-mail válido
+          example: john@hotel.com
+        document:
+          type: string
+          description: Documento de identificação (CPF, RG, Passaporte)
+          example: "12345678900"
+          minLength: 8
+          maxLength: 20
+        phone:
+          type: string
+          description: Número de telefone com código do país
+          example: "+55 11 99999-9999"
+          pattern: '^\+?[1-9]\d{1,14}$'
+
+    UserInput:
+      type: object
+      required:
+        - username
+        - password
+        - role
+        - email
+        - document
+        - phone
+      properties:
+        username:
+          type: string
+          example: johndoe
+          minLength: 3
+          maxLength: 50
+        password:
+          type: string
+          format: password
+          description: Senha do usuário (será criptografada)
+          example: "S3nh@F0rt3"
+          minLength: 8
+        role:
+          type: string
+          enum:
+            - admin
+            - receptionist
+            - guest
+          example: guest
+        email:
+          type: string
+          format: email
+          example: john@hotel.com
+        document:
+          type: string
+          example: "12345678900"
+          minLength: 8
+          maxLength: 20
+        phone:
+          type: string
+          example: "+55 11 99999-9999"
+
+    Credentials:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: johndoe
+        password:
+          type: string
+          format: password
+          example: "S3nh@F0rt3"
+
+    SuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Operação realizada com sucesso
+        data:
+          type: object
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Usuário não encontrado
+        message:
+          type: string
+          example: O usuário com username especificado não existe no sistema
+        statusCode:
+          type: integer
+          example: 404
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-11-22T14:30:00Z"
+
+paths:
+  /api/self-register:
+    post:
+      tags:
+        - Autenticação
+      summary: Auto-cadastro de hóspede
+      description: |
+        Endpoint público para auto-cadastro de novos hóspedes.
+        
+        **Não requer autenticação.**
+        
+        O usuário será criado automaticamente com role `guest`.
+      operationId: selfRegister
+      security: []
+      requestBody:
+        required: true
+        description: Dados do novo hóspede
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+            example:
+              username: maria.silva
+              password: "M@ri@2024"
+              role: guest
+              email: maria.silva@email.com
+              document: "98765432100"
+              phone: "+55 21 98888-7777"
+      responses:
+        '201':
+          description: ✅ Usuário criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                message: Usuário criado com sucesso
+                data:
+                  username: maria.silva
+                  role: guest
+                  email: maria.silva@email.com
+        '400':
+          description: ❌ Dados inválidos ou username já existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: ❌ Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/register:
+    post:
+      tags:
+        - Autenticação
+      summary: 👤 Cadastro de usuário (Admin/Receptionist)
+      description: |
+        Cadastro de novos usuários por administradores ou recepcionistas.
+        
+        **🔐 Requer autenticação JWT.**
+        
+        ### Restrições por role:
+        - **Admin**: Pode criar qualquer tipo de usuário
+        - **Receptionist**: Pode criar apenas `guest` e `receptionist`
+      operationId: register
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        description: Dados do novo usuário
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+            example:
+              username: carlos.admin
+              password: "C@rl0sAdm1n"
+              role: admin
+              email: carlos@hotel.com
+              document: "11122233344"
+              phone: "+55 11 91234-5678"
+      responses:
+        '201':
+          description: ✅ Usuário criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: ❌ Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 🔒 Token ausente ou inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: ⛔ Permissão negada (receptionist tentando criar admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/validate:
+    post:
+      tags:
+        - Autenticação
+      summary: ✔️ Validar credenciais
+      description: |
+        Valida as credenciais de um usuário sem gerar token.
+        
+        **⚠️ Não requer autenticação.**
+        
+        Útil para verificar se username/password estão corretos.
+      operationId: validateCredentials
+      security: []
+      requestBody:
+        required: true
+        description: Credenciais a serem validadas
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+            example:
+              username: johndoe
+              password: "S3nh@F0rt3"
+      responses:
+        '200':
+          description: ✅ Credenciais válidas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Credenciais válidas
+      id:
+                    type: string
+                    example: "691fdd83350610ca7e475617"
+                  role:
+                    type: string
+                    example: guest
+                  username:
+                    type: string
+                    example: nathh
+              example:
+                valid: true
+                message: Credenciais válidas
+                id: "691fdd83350610ca7e475617"
+                role: guest
+                username: nathh
+        '401':
+          description: ❌ Credenciais inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: Unauthorized
+                message: Username ou senha incorretos
+                statusCode: 401
+
+  /api/users:
+    get:
+      tags:
+        - Usuários
+      summary: 📋 Listar todos os usuários
+      description: |
+        Lista todos os usuários cadastrados no sistema.
+        
+        **🔐 Requer autenticação JWT.**
+        
+        **Permissões necessárias:** `admin` ou `receptionist`
+      operationId: listUsers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: role
+          in: query
+          description: Filtrar por role específico
+          required: false
+          schema:
+            type: string
+            enum:
+              - admin
+              - receptionist
+              - guest
+        - name: limit
+          in: query
+          description: Número máximo de resultados
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          description: Número de registros a pular (paginação)
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: ✅ Lista de usuários retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  total:
+                    type: integer
+                    example: 42
+                  limit:
+                    type: integer
+                    example: 50
+                  offset:
+                    type: integer
+                    example: 0
+              example:
+                users:
+                  - username: johndoe
+                    role: guest
+                    email: john@hotel.com
+                    document: "12345678900"
+                    phone: "+55 11 99999-9999"
+                  - username: maria.silva
+                    role: receptionist
+                    email: maria@hotel.com
+                    document: "98765432100"
+                    phone: "+55 21 98888-7777"
+                total: 2
+                limit: 50
+                offset: 0
+        '401':
+          description: 🔒 Token ausente ou inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: ⛔ Permissão negada (guest tentando listar)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/users/{username}:
+    get:
+      tags:
+        - Usuários
+      summary: 🔍 Buscar usuário específico
+      description: |
+        Retorna os dados de um usuário específico.
+        
+        **🔐 Requer autenticação JWT.**
+        
+        Guests só podem ver o próprio perfil.
+      operationId: getUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: username
+          in: path
+          description: Username do usuário a ser buscado
+          required: true
+          schema:
+            type: string
+          example: johndoe
+      responses:
+        '200':
+          description: ✅ Usuário encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: 🔒 Token ausente ou inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: ⛔ Permissão negada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: ❌ Usuário não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Usuários
+      summary: ✏️ Atualizar usuário
+      description: |
+        Atualiza os dados de um usuário existente.
+        
+        **🔐 Requer autenticação JWT.**
+        
+        - Guests só podem atualizar o próprio perfil
+        - Receptionists não podem atualizar admins
+        - Admins podem atualizar qualquer usuário
+      operationId: updateUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: username
+          in: path
+          description: Username do usuário a ser atualizado
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                document:
+                  type: string
+            example:
+              email: newemail@hotel.com
+              phone: "+55 11 91111-2222"
+      responses:
+        '200':
+          description: ✅ Usuário atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: ❌ Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 🔒 Token ausente ou inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: ⛔ Permissão negada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: ❌ Usuário não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Usuários
+      summary: 🗑️ Remover usuário
+      description: |
+        Remove um usuário do sistema permanentemente.
+        
+        **🔐 Requer autenticação JWT.**
+        
+        **⚠️ ATENÇÃO:** Apenas administradores podem remover usuários.
+        Esta ação é irreversível!
+      operationId: deleteUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: username
+          in: path
+          description: Username do usuário a ser removido
+          required: true
+          schema:
+            type: string
+          example: johndoe
+      responses:
+        '200':
+          description: ✅ Usuário removido com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                message: Usuário removido com sucesso
+                data:
+                  username: johndoe
+                  deletedAt: "2025-11-22T14:30:00Z"
+        '401':
+          description: 🔒 Token ausente ou inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: ⛔ Permissão negada (apenas admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: ❌ Usuário não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/manage-reservations:
+    put:
+      tags:
+        - Gestão
+      summary: 🗓️ Gerenciar reservas do usuário
+      description: |
+        Atualiza as reservas associadas a um usuário.
+        
+        **🔐 Requer autenticação JWT.**
+      operationId: manageReservations
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        description: Dados das reservas a serem gerenciadas
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: johndoe
+                reservations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      reservationId:
+                        type: string
+                      action:
+                        type: string
+                        enum:
+                          - add
+                          - remove
+                          - update
+      responses:
+        '200':
+          description: ✅ Reservas atualizadas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: ❌ Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 🔒 Token ausente ou inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/manage-rooms:
+    put:
+      tags:
+        - Gestão
+      summary: 🛏️ Gerenciar quartos do usuário
+      description: |
+        Atualiza os quartos associados a um usuário.
+        
+        **🔐 Requer autenticação JWT.**
+      operationId: manageRooms
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        description: Dados dos quartos a serem gerenciados
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: johndoe
+                rooms:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      roomId:
+                        type: string
+                      action:
+                        type: string
+                        enum:
+                          - assign
+                          - unassign
+      responses:
+        '200':
+          description: ✅ Quartos atualizados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: ❌ Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 🔒 Token ausente ou inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/reports:
+    get:
+      tags:
+        - Relatórios
+      summary: 📊 Relatórios administrativos
+      description: |
+        Gera relatórios administrativos do sistema.
+        
+        **🔐 Requer autenticação JWT.**
+        
+        **⚠️ Apenas administradores têm acesso.**
+        
+        Tipos de relatórios disponíveis:
+        - Estatísticas de usuários
+        - Atividades recentes
+        - Métricas de acesso
+      operationId: getReports
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          description: Tipo de relatório
+          required: false
+          schema:
+            type: string
+            enum:
+              - users
+              - activity
+              - metrics
+            default: users
+        - name: startDate
+          in: query
+          description: Data inicial do período
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2025-01-01"
+        - name: endDate
+          in: query
+          description: Data final do período
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2025-12-31"
+      responses:
+        '200':
+          description: ✅ Relatório gerado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reportType:
+                    type: string
+                    example: users
+                  generatedAt:
+                    type: string
+                    format: date-time
+                    example: "2025-11-22T14:30:00Z"
+                  data:
+                    type: object
+              example:
+                reportType: users
+                generatedAt: "2025-11-22T14:30:00Z"
+                data:
+                  totalUsers: 150
+                  byRole:
+                    admin: 5
+                    receptionist: 15
+                    guest: 130
+                  newUsersThisMonth: 25
+        '401':
+          description: 🔒 Token ausente ou inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: ⛔ Permissão negada (apenas admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

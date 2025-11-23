@@ -1,3 +1,16 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
 import jwt from 'jsonwebtoken';
 import { sanitizeCircular } from './utils/sanitize';
 
@@ -12,7 +25,7 @@ export function authenticateJWT(req, res, next) {
     const decoded = jwt.verify(token, secret);
     console.log('[DEBUG] Decoded JWT payload:', sanitizeCircular(decoded));
 
-  // Sanitiza req.user para evitar referências circulares
+  
     req.user = {
       id: decoded.id,
       role: decoded.role,

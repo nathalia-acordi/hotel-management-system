@@ -1,5 +1,5 @@
-// ReservationRepository.js
-// Interface abstrata para repositório de reservas (ISP, DIP)
+
+
 export class ReservationRepository {
   save(reservation) {
     throw new Error('Método não implementado');

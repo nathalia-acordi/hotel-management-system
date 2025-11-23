@@ -1,3 +1,10 @@
+
+
+
+
+
+
+
 import mongoose from 'mongoose';
 import fs from 'fs';
 
@@ -40,7 +47,7 @@ async function connectWithBackoff(attempts = 10) {
 }
 
 export async function connectToDatabase() {
-  if (process.env.NODE_ENV === 'test') return; // testes gerenciam sua própria conexão
+  if (process.env.NODE_ENV === 'test') return; 
   if (!uri) {
     if (process.env.NODE_ENV === 'production') {
       console.error('[USER] MONGODB_URI is required in production. Aborting startup.');
@@ -53,7 +60,7 @@ export async function connectToDatabase() {
   const ok = await connectWithBackoff(10);
   if (!ok) {
     console.error('[USER] Falha inicial após várias tentativas. Continuará tentando em background a cada 30s.');
-  // loop de re-tentativa em background
+  
     (async function loop() {
       while (mongoose.connection?.readyState !== 1) {
         try {

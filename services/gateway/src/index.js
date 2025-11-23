@@ -1,7 +1,7 @@
-import express from 'express';
-import morgan from 'morgan';
-import cors from 'cors';
 import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
 import { setupProxies } from './proxyRoutes.js';
 
 dotenv.config();
@@ -9,19 +9,16 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3005;
 
-// Configuração básica
 app.use(cors());
-app.use(express.json());
 
-// Logger customizado para não expor dados sensíveis
 app.use(morgan(':method :url :status :response-time ms', {
   skip: (req) => req.path === '/health'
 }));
 
-// Health check mais completo
+
 app.get('/health', async (req, res) => {
   try {
-    // TODO: Implementar verificação básica de conectividade com serviços
+    
     res.status(200).json({
       status: 'ok',
       service: 'gateway',
@@ -36,17 +33,23 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// Configura rotas proxy
+app.use((req, res, next) => {
+  console.log(`[GATEWAY][GLOBAL] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 setupProxies(app);
 
-// Handler de erros global
+app.use(express.json());
+
 app.use((err, req, res, next) => {
   console.error('[GATEWAY] Erro:', err.message);
   res.status(500).json({ erro: 'Erro interno do servidor' });
 });
 
-// Not found handler
+
 app.use((req, res) => {
+  console.log('[GATEWAY][404] Rota não encontrada:', req.method, req.originalUrl);
   res.status(404).json({ erro: 'Rota não encontrada' });
 });
 

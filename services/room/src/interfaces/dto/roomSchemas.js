@@ -1,3 +1,12 @@
+
+
+
+
+
+
+
+
+
 import Joi from 'joi';
 
 export const createRoomSchema = Joi.object({

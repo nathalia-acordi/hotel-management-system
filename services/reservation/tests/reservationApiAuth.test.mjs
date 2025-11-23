@@ -2,12 +2,12 @@ import request from 'supertest';
 import { createApp } from '../src/index.js';
 import jwt from 'jsonwebtoken';
 
-// Middlewares mockados para testes sem autenticação real
+
 const mockAuth = (req, res, next) => { req.user = { role: 'admin' }; next(); };
 const mockIsRecepcionista = (req, res, next) => { next(); };
 const appMock = createApp({ authenticateJWT: mockAuth, isRecepcionista: mockIsRecepcionista });
 
-// Middlewares reais para testes com JWT
+
 import { authenticateJWT, isRecepcionista } from '../src/authMiddleware.js';
 const appReal = createApp({ authenticateJWT, isRecepcionista });
 
@@ -31,7 +31,7 @@ describe('Reservation API (com autenticação real)', () => {
     const res = await request(appReal)
       .get('/reservations/active')
       .set('Authorization', `Bearer ${token}`);
-    expect([200, 403]).toContain(res.status); // 200 se admin/recepcionista, 403 se não autorizado
+    expect([200, 403]).toContain(res.status); 
   });
   it('deve rejeitar com JWT inválido', async () => {
     const res = await request(appReal)

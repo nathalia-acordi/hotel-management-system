@@ -3,15 +3,16 @@ import { PaymentRepository } from '../domain/PaymentRepository.js';
 import { HttpError } from '../application/HttpError.js';
 
 const paymentSchema = new mongoose.Schema({
-  reservationId: { type: Number, required: true, index: true },
+  
+  reservationId: { type: mongoose.Schema.Types.Mixed, required: true, index: true },
   amount: { type: Number, required: true, min: 0 },
   method: { type: String, required: true, enum: ['cartao', 'pix', 'dinheiro'] },
   status: { type: String, enum: ['pendente', 'pago', 'cancelado'], default: 'pendente' },
-  finalAmount: { type: Number }, // Valor após aplicar desconto
+  finalAmount: { type: Number }, 
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-// Índice composto para evitar pagamentos duplicados para mesma reserva/método
+
 paymentSchema.index({ reservationId: 1, method: 1 }, { unique: true });
 
 const PaymentModel = mongoose.model('Payment', paymentSchema);

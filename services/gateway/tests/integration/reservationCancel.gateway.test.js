@@ -1,5 +1,5 @@
-// reservationCancel.gateway.test.js
-// Teste migrado do antigo integration: cancelamento de reserva via gateway
+
+
 import axios from 'axios';
 
 describe('Cancelamento de reserva (via gateway)', () => {

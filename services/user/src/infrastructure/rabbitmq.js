@@ -1,4 +1,11 @@
-// Utilitário de publicação no RabbitMQ
+
+
+
+
+
+
+
+
 import amqplib from 'amqplib';
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://rabbitmq:5672';

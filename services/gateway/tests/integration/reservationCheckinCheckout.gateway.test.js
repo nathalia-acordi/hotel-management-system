@@ -1,5 +1,5 @@
-// reservationCheckinCheckout.gateway.test.js
-// Teste migrado do antigo integration: check-in e check-out via gateway
+
+
 import axios from 'axios';
 
 describe('Check-in e check-out (via gateway)', () => {

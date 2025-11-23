@@ -14,7 +14,7 @@ describe('rabbitmqConsumer', () => {
       consume,
       ack: jest.fn()
     });
-    // Mock ESM do amqplib
+    
     jest.unstable_mockModule && jest.unstable_mockModule('amqplib', () => ({
       default: { connect: jest.fn().mockResolvedValue({ createChannel }) }
     }));

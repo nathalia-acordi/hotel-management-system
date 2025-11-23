@@ -1,21 +1,21 @@
-// Entry point do Room Service
-// - Permite injeção de middlewares de autenticação/autorização para facilitar testes e customização
-// - Usa RoomFactory (GoF) para criar instâncias de quartos
-// - Implementa regras de negócio de validação de quartos
-
 import express from 'express';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { authenticateJWT as defaultAuthenticateJWT, isAdmin as defaultIsAdmin, authorizeRoles as defaultAuthorizeRoles } from './authMiddleware.js';
 import { RoomService } from './application/RoomService.js';
 import { MongoRoomRepository } from './infrastructure/MongoRoomRepository.js';
-import mongoose from 'mongoose';
 import { getSecretSource } from './interfaces/config/secrets.js';
-import dotenv from 'dotenv';
 import { createRoomSchema, updateRoomSchema, patchStatusSchema } from './interfaces/dto/roomSchemas.js';
-import fs from 'fs';
 
 dotenv.config();
-
 mongoose.set('strictQuery', true);
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const mongoUri = process.env.MONGODB_URI || '';
 const baseMongoOpts = {
@@ -24,7 +24,6 @@ const baseMongoOpts = {
   connectTimeoutMS: 5000,
   autoIndex: process.env.NODE_ENV !== 'production',
 };
-
 let lastMongoErrorMsg = null;
 
 async function tryConnectOnce() {
@@ -33,7 +32,7 @@ async function tryConnectOnce() {
   await mongoose.connect(mongoUri, opts);
 }
 
-async function connectMongoIfNeeded() {
+async function connectMongoWithRetry() {
   if (process.env.NODE_ENV === 'test') return;
   if (!mongoUri) {
     if (process.env.NODE_ENV === 'production') {
@@ -82,25 +81,16 @@ function mongoReady() {
   return mongoose.connection?.readyState === 1;
 }
 
-export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = defaultIsAdmin, authorizeRoles = defaultAuthorizeRoles } = {}) {
-  const app = express();
-  app.use(express.json());
+function setupSwagger(app) {
+  const swaggerDocument = YAML.load(path.join(__dirname, 'swagger.yaml'));
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+}
 
-  const roomRepository = new MongoRoomRepository();
-  const roomService = new RoomService(roomRepository);
-
-  // Middleware global de tratamento de erros
-  app.use((err, req, res, next) => {
-    const status = err?.status && Number.isInteger(err.status) ? err.status : 500;
-    res.status(status).json({ error: err.message || 'Erro interno' });
-  });
-
-  // Health check endpoint
+function setupHealthCheck(app) {
   app.get('/', (req, res) => { res.send('Room Service running'); });
   app.get('/health', (req, res) => {
     const mongo = mongoReady();
     const body = { status: mongo ? 'ok' : 'degradado', service: 'room', mongo, rabbitmq: Boolean(process.env.RABBITMQ_URL), uptime: process.uptime() };
-  // Em não-produção, expõe de onde os segredos vêm para depuração
     if (process.env.NODE_ENV !== 'production') {
       body.secrets = {
         mongo: getSecretSource('MONGODB_URI') || 'none',
@@ -110,8 +100,9 @@ export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = 
     }
     res.status(mongo ? 200 : 503).json(body);
   });
+}
 
-  // Criação de quarto
+function setupRoomRoutes(app, roomService, roomRepository, authenticateJWT, isAdmin, authorizeRoles) {
   app.post('/rooms', authenticateJWT, authorizeRoles('admin', 'receptionist'), async (req, res) => {
     try {
       const { error, value } = createRoomSchema.validate(req.body, { abortEarly: false });
@@ -124,7 +115,6 @@ export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = 
     }
   });
 
-  // Listar quartos (requer autenticação)
   app.get('/rooms', authenticateJWT, async (req, res, next) => {
     try {
       const rooms = await roomService.listRooms();
@@ -134,7 +124,6 @@ export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = 
     }
   });
 
-  // Obter quarto por ID (requer autenticação)
   app.get('/rooms/:id', authenticateJWT, async (req, res, next) => {
     try {
       const room = await roomRepository.findById(req.params.id);
@@ -145,7 +134,6 @@ export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = 
     }
   });
 
-  // Atualizar quarto
   app.put('/rooms/:id', authenticateJWT, isAdmin, async (req, res, next) => {
     try {
       const { error, value } = updateRoomSchema.validate(req.body, { abortEarly: false });
@@ -157,7 +145,6 @@ export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = 
     }
   });
 
-  // Remover quarto
   app.delete('/rooms/:id', authenticateJWT, isAdmin, async (req, res, next) => {
     try {
       const deletedRoom = await roomService.deleteRoom(req.params.id);
@@ -167,7 +154,6 @@ export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = 
     }
   });
 
-  // Atualizar status do quarto
   app.patch('/rooms/:id/status', authenticateJWT, authorizeRoles('admin', 'receptionist'), async (req, res) => {
     try {
       const { id } = req.params;
@@ -182,7 +168,6 @@ export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = 
     }
   });
 
-  // Marcar quarto como em manutenção
   app.patch('/rooms/:id/maintenance', authenticateJWT, authorizeRoles('admin', 'receptionist'), async (req, res) => {
     try {
       const { id } = req.params;
@@ -194,7 +179,6 @@ export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = 
     }
   });
 
-  // Marcar quarto como disponível
   app.patch('/rooms/:id/available', authenticateJWT, authorizeRoles('admin', 'receptionist'), async (req, res) => {
     try {
       const { id } = req.params;
@@ -205,18 +189,37 @@ export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = 
       return res.status(status).json({ error: err.message });
     }
   });
+}
+
+function setupErrorHandling(app) {
+  app.use((err, req, res, next) => {
+    const status = err?.status && Number.isInteger(err.status) ? err.status : 500;
+    res.status(status).json({ error: err.message || 'Erro interno' });
+  });
+}
+
+export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = defaultIsAdmin, authorizeRoles = defaultAuthorizeRoles } = {}) {
+  const app = express();
+  app.use(express.json());
+
+  setupSwagger(app);
+  setupHealthCheck(app);
+
+  const roomRepository = new MongoRoomRepository();
+  const roomService = new RoomService(roomRepository);
+  setupRoomRoutes(app, roomService, roomRepository, authenticateJWT, isAdmin, authorizeRoles);
+  setupErrorHandling(app);
 
   return app;
 }
 
 const app = createApp();
-
 const PORT = process.env.PORT || 3004;
 if (process.env.NODE_ENV !== 'test') {
-  connectMongoIfNeeded().then(() => {
-    app.listen(PORT, () => {
-      console.log(`Room Service running on port ${PORT}`);
-    });
+  connectMongoWithRetry();
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Room Service running on port ${PORT}`);
+    console.log(`Swagger UI disponível em http://localhost:${PORT}/docs`);
   });
 }
 

@@ -43,7 +43,7 @@ describe('POST /rooms duplicate number → 409', () => {
       .set('Authorization', 'Bearer dummy')
       .send(payload);
 
-  // Repositório lança código 11000; garantir que o controller mapeie para 409
+  
     expect([409, 400]).toContain(dup.status);
   });
 });

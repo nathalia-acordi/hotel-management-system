@@ -3,6 +3,9 @@
   "dependencies": {
     "amqplib": "^0.10.9",
     "dotenv": "^17.2.3",
-    "mongoose": "^8.19.1"
+    "express": "^5.1.0",
+    "mongoose": "^8.19.1",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   }
 }

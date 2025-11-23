@@ -55,7 +55,7 @@ describe('Serviço de Usuários (UserService)', () => {
   });
 
   it('não permite o cadastro de usuários duplicados', async () => {
-  // simula detecção de duplicidade pelo repositório (httpStatus 409)
+  
     userRepositoryMock.save = jest.fn(async () => {
       const e = new Error('duplicate key');
       e.httpStatus = 409;
@@ -156,7 +156,7 @@ describe('UserService - Tratamento de Erros', () => {
   });
 
   test('Deve registrar erro ao falhar no RabbitMQ', async () => {
-    // Simule uma falha no RabbitMQ
+    
     const userService = {
       createUser: jest.fn().mockImplementation(() => {
         console.error('Erro ao publicar evento no RabbitMQ:', 'RabbitMQ down');

@@ -1,4 +1,11 @@
 services:
+  mongodb:
+    image: mongo:6
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+
   rabbitmq:
     image: rabbitmq:3.13-management
     container_name: rabbitmq
@@ -18,9 +25,7 @@ services:
   user:
     build:
       context: ./services/user
-      args:
-        INCLUDE_DEV: "true"
-    image: ese-t1-user:latest
+    image: test-user
     container_name: user-service
     env_file:
       - .env.local
@@ -29,6 +34,8 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
+      # Removido MONGODB_URI local para permitir uso de Atlas via .env.local
+      # MONGODB_URI: mongodb://mongodb:27017/user_service
       RABBITMQ_URL: amqp://rabbitmq
       MONGO_FORCE_IPV4: "1"
       JWT_SECRET: ${JWT_SECRET:-segredo_super_secreto}
@@ -44,12 +51,7 @@ services:
       retries: 10
 
   room:
-    build:
-      context: ./services/room
-      args:
-        BASE_IMAGE: "node:20-bullseye"
-        INCLUDE_DEV: "true"
-    image: ese-t1-room:latest
+    image: test-room
     container_name: room-service
     env_file:
       - .env.local
@@ -58,6 +60,8 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3004
+      # Removido MONGODB_URI local para permitir uso de Atlas via .env.local
+      # MONGODB_URI: mongodb://mongodb:27017/room_service
       RABBITMQ_URL: amqp://rabbitmq
       MONGO_FORCE_IPV4: "1"
       JWT_SECRET: ${JWT_SECRET:-segredo_super_secreto}
@@ -73,13 +77,13 @@ services:
       retries: 10
 
   reservation:
-    build: ./services/reservation
-    image: ese-t1-reservation:latest
+    image: test-reservation
     container_name: reservation-service
     ports:
       - "3002:3000"
     environment:
       NODE_ENV: development
+      MONGODB_URI: mongodb://mongodb:27017/reservation_service
       RABBITMQ_URL: ${RABBITMQ_URL:-amqp://rabbitmq:5672}
       PORT: 3000
       JWT_SECRET: ${JWT_SECRET:-segredo_super_secreto}
@@ -95,14 +99,16 @@ services:
       retries: 10
 
   payment:
-    build: ./services/payment
-    image: ese-t1-payment:latest
+    build:
+      context: ./services/payment
+    image: test-payment
     container_name: payment-service
     ports:
       - "3003:3003"
     environment:
       NODE_ENV: development
       PORT: 3003
+      PAYMENT_MONGODB_URI: mongodb+srv://nathaliaccord_db_user:6xajAOAJ9k12mWgB@cluster0.ovagacl.mongodb.net/?appName=Cluster0
       RESERVATION_URL: http://reservation-service:3000
       JWT_SECRET: ${JWT_SECRET:-segredo_super_secreto}
       RABBITMQ_URL: ${RABBITMQ_URL:-amqp://rabbitmq:5672}
@@ -156,6 +162,12 @@ services:
       NODE_ENV: development
       PORT: 3005
       JWT_SECRET: ${JWT_SECRET:-segredo_super_secreto}
+      # URLs explícitas dos serviços para o proxy do gateway
+      USER_URL: http://user:3000
+      AUTH_URL: http://auth:3001
+      RESERVATION_URL: http://reservation:3000
+      PAYMENT_URL: http://payment:3003
+      ROOM_URL: http://room:3004
     depends_on:
       user:
         condition: service_started

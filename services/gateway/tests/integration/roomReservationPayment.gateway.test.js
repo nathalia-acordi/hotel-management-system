@@ -1,5 +1,5 @@
-// roomReservationPayment.gateway.test.js
-// Teste migrado do antigo integration: pagamento de reserva de quarto via gateway
+
+
 import axios from 'axios';
 
 describe('Pagamento de reserva de quarto (via gateway)', () => {
