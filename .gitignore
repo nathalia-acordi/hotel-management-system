@@ -49,4 +49,5 @@ build/
 *.key
 *.pfx
 *.p12
-*.crt
+*.crt*
+*.bak
