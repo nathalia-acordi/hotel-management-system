@@ -70,7 +70,6 @@ graph TB
     subgraph Infraestrutura
         RMQ[(RabbitMQ :5672)]
         DB_User[(MongoDB users_db)]
-        DB_Auth[(MongoDB auth_db)]
         DB_Reservation[(MongoDB reservations_db)]
         DB_Payment[(MongoDB payments_db)]
         DB_Room[(MongoDB rooms_db)]
@@ -83,7 +82,7 @@ graph TB
     Gateway -->|Proxy| Room
     
     User <-->|CRUD| DB_User
-    Auth <-->|CRUD| DB_Auth
+    Auth -->|Consulta| User
     Reservation <-->|CRUD| DB_Reservation
     Payment <-->|CRUD| DB_Payment
     Room <-->|CRUD| DB_Room
@@ -105,13 +104,13 @@ graph TB
 
 | Serviço | Porta | Banco de Dados | Swagger UI |
 |---------|-------|----------------|------------|
-| **Gateway** | 3005 | - | `http://localhost:3005/docs` |
+| **Gateway** | 3005 | - | `-` |
 | **User** | 3000 | `users_db` | `http://localhost:3000/docs` |
-| **Auth** | 3001 | `auth_db` | `http://localhost:3001/docs` |
+| **Auth** | 3001 | `-` | `-` |
 | **Reservation** | 3002 | `reservations_db` | `http://localhost:3002/docs` |
 | **Payment** | 3003 | `payments_db` | `http://localhost:3003/docs` |
 | **Room** | 3004 | `rooms_db` | `http://localhost:3004/docs` |
-| **RabbitMQ** | 5672 / 15672 | - | `http://localhost:15672` |
+| **RabbitMQ** | 5672 / 15672 | - | `-` |
 
 > **Nota**: Cada serviço possui seu próprio banco de dados isolado, seguindo o padrão de microsserviços.
 
@@ -402,7 +401,30 @@ Acesse o console de gerenciamento do RabbitMQ:
 - Verifique os logs: `docker compose logs rabbitmq`
 - Reinicie o container: `docker compose restart rabbitmq`
 
+## 📚 Documentação Adicional
+
+Para informações detalhadas sobre arquitetura, padrões de projeto e estratégia de testes, consulte:
+
+- **Arquitetura completa**: `docs/arquitetura.md`
+- **Swagger UI**: Acesse `/docs` em cada serviço (veja tabela acima)
+
+## 🤝 Contribuindo
+
+Contribuições são bem-vindas! Por favor:
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/MinhaFeature`)
+3. Rode os testes (`npm test`)
+4. Commit suas mudanças (`git commit -m 'Add: MinhaFeature'`)
+5. Push para a branch (`git push origin feature/MinhaFeature`)
+6. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto é licenciado sob a MIT License.
+
+---
 
 <div align="center">
-  <p>Desenvolvido para a disciplina 85ESE (Engenharia de Software Orientada a Serviços) da UDESC</p>
+  <p>Desenvolvido com ❤️ para aprendizado de microsserviços e clean architecture</p>
 </div>
