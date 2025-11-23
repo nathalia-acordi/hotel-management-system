@@ -401,31 +401,8 @@ Acesse o console de gerenciamento do RabbitMQ:
 - Verifique os logs: `docker compose logs rabbitmq`
 - Reinicie o container: `docker compose restart rabbitmq`
 
-## 📚 Documentação Adicional
-
-Para informações detalhadas sobre arquitetura, padrões de projeto e estratégia de testes, consulte:
-
-- **Arquitetura completa**: `docs/arquitetura.md`
-- **Swagger UI**: Acesse `/docs` em cada serviço (veja tabela acima)
-
-## 🤝 Contribuindo
-
-Contribuições são bem-vindas! Por favor:
-
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/MinhaFeature`)
-3. Rode os testes (`npm test`)
-4. Commit suas mudanças (`git commit -m 'Add: MinhaFeature'`)
-5. Push para a branch (`git push origin feature/MinhaFeature`)
-6. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto é licenciado sob a MIT License.
-
----
-
 <div align="center">
-  <p>Desenvolvido com ❤️ para aprendizado de microsserviços e clean architecture</p>
+  <p>Desenvolvido para a disciplina 85ESE (Engenharia de Software Orientada a Serviços) do curso de Engenharia de Software da UDESC</p>
 </div>
+
 
