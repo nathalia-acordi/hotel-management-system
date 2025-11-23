@@ -31,6 +31,19 @@ export class AuthService {
       throw err;
     }
 
+    // If the user reader returned a passwordHash, validate the provided
+    // password here using the injected passwordHasher. Tests mock the
+    // passwordHasher and the UserReader to provide a passwordHash for this
+    // validation.
+    if (validated.passwordHash) {
+      const match = await this.passwordHasher.compare(password, validated.passwordHash);
+      if (!match) {
+        const err = new Error('Credenciais inválidas');
+        err.status = 401;
+        throw err;
+      }
+    }
+
     
     
     const roleMap = {
@@ -63,7 +76,7 @@ export class AuthService {
       user: {
         id: validated.id,
         username: validated.username,
-        email: undefined,
+        email: validated.email || undefined,
         role: validated.role
       },
     };
