@@ -104,13 +104,13 @@ graph TB
 
 | Serviço | Porta | Banco de Dados | Swagger UI |
 |---------|-------|----------------|------------|
-| **Gateway** | 3005 | - | `-` |
+| **Gateway** | 3005 | - | - |
 | **User** | 3000 | `users_db` | `http://localhost:3000/docs` |
-| **Auth** | 3001 | `-` | `-` |
+| **Auth** | 3001 | - | - |
 | **Reservation** | 3002 | `reservations_db` | `http://localhost:3002/docs` |
 | **Payment** | 3003 | `payments_db` | `http://localhost:3003/docs` |
 | **Room** | 3004 | `rooms_db` | `http://localhost:3004/docs` |
-| **RabbitMQ** | 5672 / 15672 | - | `-` |
+| **RabbitMQ** | 5672 / 15672 | - | - |
 
 > **Nota**: Cada serviço possui seu próprio banco de dados isolado, seguindo o padrão de microsserviços.
 
@@ -428,3 +428,4 @@ Este projeto é licenciado sob a MIT License.
 <div align="center">
   <p>Desenvolvido com ❤️ para aprendizado de microsserviços e clean architecture</p>
 </div>
+
