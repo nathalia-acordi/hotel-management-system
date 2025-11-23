@@ -7,8 +7,12 @@ on:
 jobs:
   generate-docs:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
       - name: Install yamljs
         run: npm install -g yamljs
       - name: Convert swagger YAML to JSON
@@ -21,6 +25,7 @@ jobs:
       - name: Commit generated docs
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           commit_message: "chore(docs): generate swagger JSON"
           file_pattern: "docs/swagger/*"
           branch: main
