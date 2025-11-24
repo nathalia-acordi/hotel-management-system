@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import { authenticateJWT as defaultAuthenticateJWT, isAdmin as defaultIsAdmin, authorizeRoles as defaultAuthorizeRoles } from './authMiddleware.js';
 import { RoomService } from './application/RoomService.js';
 import { MongoRoomRepository } from './infrastructure/MongoRoomRepository.js';
+import { InMemoryRoomRepository } from './infrastructure/InMemoryRoomRepository.js';
 import { getSecretSource } from './interfaces/config/secrets.js';
 import { createRoomSchema, updateRoomSchema, patchStatusSchema } from './interfaces/dto/roomSchemas.js';
 import { attachMetrics } from './monitoring/metrics.js';
@@ -199,7 +200,7 @@ function setupErrorHandling(app) {
   });
 }
 
-export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = defaultIsAdmin, authorizeRoles = defaultAuthorizeRoles } = {}) {
+export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = defaultIsAdmin, authorizeRoles = defaultAuthorizeRoles, roomRepository: injectedRoomRepository } = {}) {
   const app = express();
   try { attachMetrics(app); } catch (e) { console.warn('[ROOM] metrics attach failed', e && e.message); }
   app.use(express.json());
@@ -207,7 +208,7 @@ export function createApp({ authenticateJWT = defaultAuthenticateJWT, isAdmin = 
   setupSwagger(app);
   setupHealthCheck(app);
 
-  const roomRepository = new MongoRoomRepository();
+  const roomRepository = injectedRoomRepository || global.__roomRepository__ || (process.env.NODE_ENV === 'test' ? new InMemoryRoomRepository() : new MongoRoomRepository());
   const roomService = new RoomService(roomRepository);
   setupRoomRoutes(app, roomService, roomRepository, authenticateJWT, isAdmin, authorizeRoles);
   setupErrorHandling(app);

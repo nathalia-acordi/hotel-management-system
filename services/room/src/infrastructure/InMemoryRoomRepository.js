@@ -9,6 +9,7 @@
 
 
 import { IRoomRepository } from '../domain/IRoomRepository.js';
+import crypto from 'crypto';
 
 export class InMemoryRoomRepository extends IRoomRepository {
   constructor() {
@@ -18,7 +19,8 @@ export class InMemoryRoomRepository extends IRoomRepository {
   }
 
   async create(room) {
-    room.id = this.nextRoomId++;
+    // generate a stable-looking 24-char hex id compatible with ObjectId checks in tests
+    room.id = crypto.randomBytes(12).toString('hex');
     this.rooms.push(room);
     return room;
   }
@@ -28,7 +30,8 @@ export class InMemoryRoomRepository extends IRoomRepository {
   }
 
   async findById(id) {
-    return this.rooms.find(r => r.id === id) || null;
+    const sid = String(id);
+    return this.rooms.find(r => String(r.id) === sid) || null;
   }
 
   async findAll() {
@@ -36,14 +39,16 @@ export class InMemoryRoomRepository extends IRoomRepository {
   }
 
   async update(id, data) {
-    const idx = this.rooms.findIndex(r => r.id === id);
+    const sid = String(id);
+    const idx = this.rooms.findIndex(r => String(r.id) === sid);
     if (idx === -1) return null;
     this.rooms[idx] = { ...this.rooms[idx], ...data };
     return this.rooms[idx];
   }
 
   async delete(id) {
-    const idx = this.rooms.findIndex(r => r.id === id);
+    const sid = String(id);
+    const idx = this.rooms.findIndex(r => String(r.id) === sid);
     if (idx === -1) return null;
     const removed = this.rooms.splice(idx, 1)[0];
     return removed;
