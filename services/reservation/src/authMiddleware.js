@@ -34,3 +34,11 @@ export function isReceptionist(req, res, next) {
   }
   return res.status(403).json({ error: 'Acesso restrito a recepcionistas ou administradores' });
 }
+
+// Alias em Português para compatibilidade com testes/consumo existente
+export const isRecepcionista = isReceptionist;
+
+// Also provide an explicit function export (forwarder) to avoid potential ESM linkage issues
+export function isRecepcionistaFunc(req, res, next) {
+  return isReceptionist(req, res, next);
+}
