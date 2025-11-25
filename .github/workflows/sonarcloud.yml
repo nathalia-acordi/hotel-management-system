@@ -27,7 +27,7 @@ jobs:
         run: npm test --if-present
 
       - name: Run SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v1
+        uses: SonarSource/sonarcloud-github-action@5875562561d22a34be0c657405578705a169af6c
         with:
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
