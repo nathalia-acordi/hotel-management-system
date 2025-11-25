@@ -222,6 +222,46 @@ docker compose up -d --build
 docker compose down
 ```
 
+## 📈 Observability — Prometheus & Grafana
+
+O repositório inclui uma stack de observabilidade com Prometheus (coleta de métricas) e Grafana (visualização). A configuração básica já está em `docker-compose.yml` e os dashboards iniciais em `grafana/dashboards`.
+
+Como subir apenas a stack de observabilidade:
+
+```powershell
+# Inicia Prometheus e Grafana (em background)
+docker compose up -d prometheus grafana
+```
+
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3002
+
+Credenciais padrão do Grafana (definidas no `docker-compose.yml`):
+- Usuário: `admin`
+- Senha: `admin`
+
+Observações úteis:
+- Prometheus roda dentro da rede Docker e coleta métricas dos serviços usando nomes de container (ex.: `http://gateway:3005/metrics`). Esses hostnames não são resolvíveis no seu navegador host — para abrir as métricas localmente, use as portas mapeadas para `localhost` (ex.: `http://localhost:3005/metrics`).
+- Se o Prometheus listar `http://gateway:3005/metrics` como target UP, significa que ele conseguiu acessar o endpoint dentro da rede Docker.
+
+Persistência e dashboards
+- O Grafana persiste dados (dashboards, usuários) no volume Docker `grafana-storage` montado em `/var/lib/grafana`. Se esse volume for preservado entre reinícios, seus dashboards salvos não serão perdidos.
+- O diretório `./grafana/dashboards` é montado dentro do container e pode conter JSONs de dashboards para importação manual ou provisionamento.
+
+Como adicionar o Prometheus como data source no Grafana (rápido):
+1. Acesse `http://localhost:3002` e faça login com `admin`/`admin`.
+2. Menu → Configuration → Data Sources → Add data source → Prometheus.
+3. Em **URL** use `http://prometheus:9090` (quando Grafana rodar dentro do Docker) ou `http://localhost:9090` (quando acessar do host). Teste e salve.
+
+Importando um dashboard existente:
+1. Menu → Create (+) → Import → Upload JSON file.
+2. Selecione o JSON em `grafana/dashboards/` (por exemplo `grafana/dashboards/services-dashboard.json`).
+3. Ao importar escolha o Data source Prometheus e clique em Import.
+
+Automatizar (provisioning)
+- Se quiser que o Grafana configure automaticamente o data source e importe dashboards ao iniciar, posso adicionar arquivos de provisioning em `grafana/provisioning/` (datasources + dashboards). Diga se quer que eu configure isso para você.
+
+
 ### Localmente (Desenvolvimento)
 
 ```powershell
