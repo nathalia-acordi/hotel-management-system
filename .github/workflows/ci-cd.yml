@@ -31,7 +31,27 @@ PAYMENT_MONGODB_URI=mongodb://mongodb:27017/payment_service
 EOF
           docker compose up -d --build user auth reservation payment room gateway
           echo "Waiting for services to initialize"
-          sleep 20
+          sleep 5
+          echo "Checking service health endpoints"
+          # list of host:port to check
+          SERVICES=("auth:3001" "user:3000" "reservation:3000" "payment:3003" "room:3004")
+          for s in "${SERVICES[@]}"; do
+            host=${s%%:*}
+            port=${s##*:}
+            ok=0
+            for i in $(seq 1 20); do
+              status=$(curl -s -o /dev/null -w "%{http_code}" "http://$host:$port/health" || true)
+              if [ "$status" = "200" ]; then
+                echo "$host:$port healthy"
+                ok=1
+                break
+              fi
+              sleep 3
+            done
+            if [ $ok -ne 1 ]; then
+              echo "Warning: $host:$port did not become healthy in time"
+            fi
+          done
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:

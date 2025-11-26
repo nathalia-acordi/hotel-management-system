@@ -44,11 +44,16 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
+          # Aggregate LCOV reports if present
+          mkdir -p coverage-aggregate
+          find services -type f -path "*/coverage/lcov.info" -print0 | xargs -0 cat > coverage-aggregate/lcov.info || true
+
           $SONAR_SCANNER_HOME/bin/sonar-scanner \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=$SONAR_TOKEN \
-            -Dsonar.sources=services
+            -Dsonar.sources=services \
+            -Dsonar.javascript.lcov.reportPaths=coverage-aggregate/lcov.info
 
   deploy-prod:
     name: Deploy (production placeholder)
