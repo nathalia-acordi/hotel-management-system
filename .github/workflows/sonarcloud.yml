@@ -28,6 +28,7 @@ jobs:
         run: npm test --if-present -- --testPathIgnorePatterns="/tests/integration/"
 
       - name: Set up Java 17
+        id: setup-java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -48,11 +49,18 @@ jobs:
           curl -sSLo sonar-scanner.zip "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_VER}-linux.zip"
           unzip sonar-scanner.zip
           mv sonar-scanner-${SONAR_VER}-linux sonar-scanner
+          # Remove bundled JRE so the scanner uses the Java installed by actions/setup-java
+          if [ -d "sonar-scanner/jre" ]; then
+            echo "Removing bundled JRE at sonar-scanner/jre to force system Java"
+            rm -rf sonar-scanner/jre
+          fi
           echo "SONAR_SCANNER_HOME=$PWD/sonar-scanner" >> $GITHUB_ENV
 
       - name: Run SonarScanner (CLI)
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          JAVA_HOME: ${{ steps.setup-java.outputs.java-home }}
+          PATH: ${{ steps.setup-java.outputs.java-home }}/bin:${{ env.PATH }}
         run: |
           echo "SONAR_SCANNER_HOME=$SONAR_SCANNER_HOME"
           if [ -x "$SONAR_SCANNER_HOME/bin/sonar-scanner" ]; then
@@ -64,13 +72,30 @@ jobs:
           # Aggregate LCOV reports if present
           mkdir -p coverage-aggregate
           find services -type f -path "*/coverage/lcov.info" -print0 | xargs -0 cat > coverage-aggregate/lcov.info || true
+          echo "--- DIAGNOSTICS BEFORE SCANNER ---"
+          echo "which java: $(which java || true)"
+          echo "readlink java: $(readlink -f $(which java) || true)"
+          echo "JAVA_HOME=$JAVA_HOME"
+          echo "PATH=$PATH"
+          echo "ls -la SONAR_SCANNER_HOME/bin:"; ls -la "$SONAR_SCANNER_HOME/bin" || true
+          echo "ls -la SONAR_SCANNER_HOME/jre/bin:"; ls -la "$SONAR_SCANNER_HOME/jre/bin" || true
+          echo "ls -la SONAR_SCANNER_HOME/lib:"; ls -la "$SONAR_SCANNER_HOME/lib" || true
+          echo "ps aux | grep -E 'java|sonar'"; ps aux | grep -E 'java|sonar' || true
 
-          $SONAR_SCANNER_HOME/bin/sonar-scanner \
+          echo "Using explicit java at: $JAVA_HOME/bin/java"
+          $JAVA_HOME/bin/java -version || true
+
+          # Try invoking the scanner using the jar directly (force runner java)
+          # Invoke the scanner main class with the runner Java and enable scanner debug (-X)
+          echo "Invoking scanner via classpath using runner Java"
+          $JAVA_HOME/bin/java -cp "$SONAR_SCANNER_HOME/lib/*" org.sonarsource.scanner.cli.Main -X \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=$SONAR_TOKEN \
             -Dsonar.sources=services \
-            -Dsonar.javascript.lcov.reportPaths=coverage-aggregate/lcov.info
+            -Dsonar.javascript.lcov.reportPaths=coverage-aggregate/lcov.info || true
+          echo "--- DIAGNOSTICS AFTER SCANNER ATTEMPT ---"
+          ps aux | grep -E 'java|sonar' || true
 
   deploy-prod:
     name: Deploy (production placeholder)
