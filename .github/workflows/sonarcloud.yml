@@ -33,6 +33,15 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Java diagnostics
+        run: |
+          echo "== java -version =="
+          java -version || true
+          echo "== which java && java -XshowSettings:properties -version (JAVA_HOME) =="
+          which java || true
+          echo "JAVA_HOME=$JAVA_HOME"
+          java -XshowSettings:properties -version 2>&1 | sed -n '1,40p' || true
+
       - name: Download SonarScanner CLI
         run: |
           SONAR_VER=4.8.1.3023
@@ -45,6 +54,13 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
+          echo "SONAR_SCANNER_HOME=$SONAR_SCANNER_HOME"
+          if [ -x "$SONAR_SCANNER_HOME/bin/sonar-scanner" ]; then
+            echo "sonar-scanner exists"
+            $SONAR_SCANNER_HOME/bin/sonar-scanner --version || true
+          else
+            echo "sonar-scanner not found at $SONAR_SCANNER_HOME"
+          fi
           # Aggregate LCOV reports if present
           mkdir -p coverage-aggregate
           find services -type f -path "*/coverage/lcov.info" -print0 | xargs -0 cat > coverage-aggregate/lcov.info || true
