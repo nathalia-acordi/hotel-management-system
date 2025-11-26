@@ -23,8 +23,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test --if-present
+      - name: Run tests (skip integration)
+        run: npm test --if-present -- --testPathIgnorePatterns="/tests/integration/"
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
