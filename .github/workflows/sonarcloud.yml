@@ -2,9 +2,10 @@ name: SonarCloud
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, ci/add-environments ]
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
 
 jobs:
   analyze:
