@@ -20,17 +20,18 @@ jobs:
         if: "${{ matrix.service == 'gateway' }}"
         run: |
           cd ${{ github.workspace }}
-          echo "Creating temporary .env.local for CI"
-          cat > .env.local <<'EOF'
-          # Temporary env for CI Docker Compose
-          JWT_SECRET=ci_test_secret
-          RABBITMQ_URL=amqp://rabbitmq:5672
-          USER_MONGODB_URI=mongodb://mongodb:27017/user_service
-          ROOM_MONGODB_URI=mongodb://mongodb:27017/room_service
-          PAYMENT_MONGODB_URI=mongodb://mongodb:27017/payment_service
-          EOF
+          echo "Creating temporary .env for CI"
+          cat > .env <<'EOF'
+# Temporary env for CI Docker Compose
+JWT_SECRET=ci_test_secret
+RABBITMQ_URL=amqp://rabbitmq:5672
+USER_MONGODB_URI=mongodb://mongodb:27017/user_service
+ROOM_MONGODB_URI=mongodb://mongodb:27017/room_service
+PAYMENT_MONGODB_URI=mongodb://mongodb:27017/payment_service
+EOF
           docker compose up -d --build user auth reservation payment room gateway
-          sleep 10
+          echo "Waiting for services to initialize"
+          sleep 20
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
