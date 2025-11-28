@@ -107,7 +107,7 @@ graph TB
 | **Gateway** | 3005 | - | - |
 | **User** | 3000 | `users_db` | `http://localhost:3000/docs` |
 | **Auth** | 3001 | - | - |
-| **Reservation** | 3002 | `reservations_db` | `http://localhost:3002/docs` |
+| **Reservation** | 3002 | `reservations_db` | `http://localhost:3006/docs` |
 | **Payment** | 3003 | `payments_db` | `http://localhost:3003/docs` |
 | **Room** | 3004 | `rooms_db` | `http://localhost:3004/docs` |
 | **RabbitMQ** | 5672 / 15672 | - | - |
@@ -444,6 +444,7 @@ Acesse o console de gerenciamento do RabbitMQ:
 <div align="center">
   <p>Desenvolvido para a disciplina 85ESE (Engenharia de Software Orientada a Serviços) do curso de Engenharia de Software da UDESC</p>
 </div>
+
 
 
 
