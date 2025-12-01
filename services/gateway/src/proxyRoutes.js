@@ -1,5 +1,14 @@
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { authenticateJWT, authorizeRoles } from './authMiddleware.js';
+import { startTestStubs } from './testStubs.js';
+
+// NOTE: we must NOT statically import other services' source files here.
+// Those files are present only in the monorepo workspace and are not
+// available inside production Docker images. Import them dynamically
+// inside `setupProxies` when running under `NODE_ENV==='test'` so that
+// the gateway can run inside containers without attempting to resolve
+// filesystem imports to other services.
+
 
 
 const services = {
@@ -59,7 +68,94 @@ const baseProxyConfig = {
   }
 };
 
-export function setupProxies(app) {
+export async function setupProxies(app) {
+  if (process.env.NODE_ENV === 'test') {
+    // In test mode we try to mount in-process app instances from sibling
+    // packages so integration tests can run without Docker. These imports
+    // live in other packages in the repo and will not exist inside the
+    // production images, so import them dynamically and fail gracefully.
+    let mountedAny = false;
+    let userApp, authApp, reservationApp, roomApp, paymentApp;
+
+    // Try dynamic import of user app
+    try {
+      const userMod = await import('../../user/src/interfaces/server.js').catch(() => null);
+      const createUserApp = userMod && (userMod.createApp || (userMod.default && userMod.default.createApp));
+      if (createUserApp) {
+        try { userApp = createUserApp(); } catch (e) { console.warn('[GATEWAY] userApp create failed', e && e.message); }
+        if (userApp) {
+          app.use('/', userApp);
+          app.use('/api', userApp);
+          mountedAny = true;
+        }
+      }
+    } catch (e) { console.warn('[GATEWAY] Skipped mounting user app:', e && e.message); }
+
+    // Auth app
+    try {
+      const authMod = await import('../../auth/src/interfaces/server.js').catch(() => null);
+      const createAuthApp = authMod && (authMod.createApp || (authMod.default && authMod.default.createApp));
+      if (createAuthApp) {
+        try { authApp = createAuthApp(); } catch (e) { console.warn('[GATEWAY] authApp create failed', e && e.message); }
+        if (authApp) { app.use('/', authApp); mountedAny = true; }
+      }
+    } catch (e) { console.warn('[GATEWAY] Skipped mounting auth app:', e && e.message); }
+
+    // Payment app (may export an express app as default)
+    try {
+      const payMod = await import('../../payment/src/index.mjs').catch(() => null);
+      const paymentCandidate = payMod && (payMod.default || payMod);
+      if (paymentCandidate) {
+        try { paymentApp = paymentCandidate; } catch (e) { console.warn('[GATEWAY] paymentApp attach failed', e && e.message); }
+        if (paymentApp) { app.use('/api', paymentApp); mountedAny = true; }
+      }
+    } catch (e) { console.warn('[GATEWAY] Skipped mounting payment app:', e && e.message); }
+
+    // Reservation app
+    try {
+      const resMod = await import('../../reservation/src/index.js').catch(() => null);
+      const createReservationApp = resMod && (resMod.createApp || (resMod.default && resMod.default.createApp));
+      if (createReservationApp) {
+        try { reservationApp = createReservationApp(); } catch (e) { console.warn('[GATEWAY] reservationApp create failed', e && e.message); }
+        if (reservationApp) { app.use('/api', reservationApp); mountedAny = true; }
+      }
+    } catch (e) { console.warn('[GATEWAY] Skipped mounting reservation app:', e && e.message); }
+
+    // Room app
+    try {
+      const roomMod = await import('../../room/src/index.mjs').catch(() => null);
+      const createRoomApp = roomMod && (roomMod.createApp || (roomMod.default && roomMod.default.createApp));
+      if (createRoomApp) {
+        try { roomApp = createRoomApp(); } catch (e) { console.warn('[GATEWAY] roomApp create failed', e && e.message); }
+        if (roomApp) { app.use('/api', roomApp); mountedAny = true; }
+      }
+    } catch (e) { console.warn('[GATEWAY] Skipped mounting room app:', e && e.message); }
+
+    if (mountedAny) {
+      console.log('[GATEWAY] Mounted available in-process service apps for test environment');
+      try {
+        if (!process.env.JEST_WORKER_ID) {
+          process.env.JWT_SECRET = process.env.JWT_SECRET || 'segredo_super_secreto';
+          const { servers, ports } = await startTestStubs({ userApp, authApp, reservationApp, paymentApp, roomApp });
+          if (ports) {
+            if (ports.user) process.env.USER_URL = `http://127.0.0.1:${ports.user}`;
+            if (ports.auth) process.env.AUTH_URL = `http://127.0.0.1:${ports.auth}`;
+            if (ports.reservation) process.env.RESERVATION_URL = `http://127.0.0.1:${ports.reservation}`;
+            if (ports.payment) process.env.PAYMENT_URL = `http://127.0.0.1:${ports.payment}`;
+            if (ports.room) process.env.ROOM_URL = `http://127.0.0.1:${ports.room}`;
+          }
+          console.log('[GATEWAY] Started test stub servers for mounted apps', ports);
+          try { if (global.__inMemoryUserRepo) global.__inMemoryUserRepo.users = []; } catch (e) {}
+          global.__testStubServers = servers || [];
+        }
+      } catch (e) {
+        console.warn('[GATEWAY] Failed starting test stub servers:', e && e.message);
+      }
+      return;
+    } else {
+      console.warn('[GATEWAY] No in-process service apps mounted for tests; will use proxies');
+    }
+  }
   
   app.use('/register', createProxyMiddleware({
     ...baseProxyConfig,

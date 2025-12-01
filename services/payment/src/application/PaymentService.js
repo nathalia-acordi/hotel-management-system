@@ -79,8 +79,9 @@ export class PaymentService {
       status: status || 'pendente',
       createdAt: new Date().toISOString()
     };
-    await this.paymentRepository.add(payment);
-    
+
+    // If the payment is already marked as paid, calculate the finalAmount
+    // (after discounts) before persisting so the DB has the correct value.
     if ((status || 'pendente') === 'pago') {
       try {
         let strategy;
@@ -96,12 +97,26 @@ export class PaymentService {
             strategy = new CardNoDiscountStrategy();
         }
         const finalAmount = strategy.calculate(amount);
-        payment.amount = finalAmount;
-        await this.publishPaymentEvent(payment);
+        // keep original amount and persist finalAmount separately
+        payment.finalAmount = finalAmount;
+        payment.amount = amount;
       } catch (err) {
         console.error('[PAYMENT] Erro ao processar pagamento:', err.message);
       }
     }
+
+    // Persist the payment (with finalAmount when applicable)
+    await this.paymentRepository.add(payment);
+
+    // Publish event after persistence; event should include finalAmount when present
+    if ((payment.status || 'pendente') === 'pago') {
+      try {
+        await this.publishPaymentEvent(payment);
+      } catch (err) {
+        console.error('[PAYMENT] Erro ao publicar evento após persistir pagamento:', err.message);
+      }
+    }
+
     return { status: 201, body: payment };
   }
 

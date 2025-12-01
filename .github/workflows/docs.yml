@@ -13,21 +13,39 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: true
-      - name: Install yamljs
-        run: npm install -g yamljs
+      - name: Install tools
+        run: |
+          npm install -g yamljs swagger-jsdoc
+
+      - name: Generate swagger.yaml from source (if possible)
+        run: |
+          set -e
+          for svc in services/*; do
+            if [ -d "$svc/src" ]; then
+              # try to generate swagger.yaml from JSDoc in the service source
+              echo "Processing $svc"
+              # swagger-jsdoc will exit non-zero if no matching files; ignore failures
+              swagger-jsdoc -o "$svc/src/swagger.yaml" "$svc/src/**/*.js" || true
+              swagger-jsdoc -o "$svc/src/swagger.yaml" "$svc/src/**/*.mjs" || true
+            fi
+          done
+
       - name: Convert swagger YAML to JSON
         run: |
           mkdir -p docs/swagger
           for f in services/*/src/swagger.yaml; do
-            name=$(basename $(dirname $f))
-            yaml2json "$f" > "docs/swagger/${name}.json"
+            if [ -f "$f" ]; then
+              name=$(basename $(dirname $f))
+              yaml2json "$f" > "docs/swagger/${name}.json"
+            fi
           done
+
       - name: Commit generated docs
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          commit_message: "chore(docs): generate swagger JSON"
-          file_pattern: "docs/swagger/*"
+          commit_message: "chore(docs): generate swagger YAML/JSON"
+          file_pattern: "docs/swagger/*,services/*/src/swagger.yaml"
           branch: main
           author_name: github-actions
           author_email: actions@github.com
