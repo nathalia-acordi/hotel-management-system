@@ -86,6 +86,31 @@ export function configureRoutes(app, getUserRepoInstance) {
     next();
   }, registerHandler);
 
+  /**
+   * @openapi
+   * /self-register:
+   *   post:
+   *     summary: Auto-register a guest user
+   *     tags:
+   *       - Autenticação
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               username:
+   *                 type: string
+   *               password:
+   *                 type: string
+   *               email:
+   *                 type: string
+   *     responses:
+   *       '201':
+   *         description: Usuário criado com sucesso
+   */
+
   
   app.post('/register', async (req, res, next) => {
     console.log('[REGISTER ROUTE] Requisição recebida em /register');
