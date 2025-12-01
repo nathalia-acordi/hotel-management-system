@@ -62,7 +62,7 @@ jobs:
           find services -type f -path "*/coverage/lcov.info" -print0 | xargs -0 cat > coverage-aggregate/lcov.info || true
 
       - name: SonarCloud Scan (official action)
-        uses: SonarSource/sonarcloud-github-action@v2
+        uses: SonarSource/sonarcloud-github-action@e44258b109568baa0df60ed515909fc6c72cba92
         with:
           args: >
             -Dsonar.sources=services
