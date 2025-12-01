@@ -27,22 +27,57 @@ export function createApp() {
   const app = express();
   app.use(express.json());
   
-  try {
-    const swaggerPath = path.join(__dirname, '../../swagger.yaml');
-    if (fs.existsSync(swaggerPath)) {
-      const swaggerDocument = YAML.load(swaggerPath);
-      app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-    } else {
-      console.warn('[ROUTES] swagger.yaml não encontrado, pulando /docs');
+    try {
+      const swaggerPath = path.join(__dirname, '../../swagger.yaml');
+      if (fs.existsSync(swaggerPath)) {
+        const swaggerDocument = YAML.load(swaggerPath);
+        app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+      } else {
+        console.warn('[ROUTES] swagger.yaml não encontrado, pulando /docs');
+      }
+    } catch (err) {
+      console.warn('[ROUTES] Falha ao carregar swagger.yaml:', err?.message || err);
     }
-  } catch (err) {
-    console.warn('[ROUTES] Falha ao carregar swagger.yaml:', err?.message || err);
+
+  // Provide an in-memory fallback for tests so createApp() is mountable without MongoDB.
+  class InMemoryUserRepository {
+    constructor() { this.users = []; }
+    async save(user) {
+      const exists = this.users.find(u => u.username === user.username || (user.email && u.email === user.email));
+      if (exists) { const err = new Error('Username already exists'); err.httpStatus = 409; throw err; }
+      const saved = { ...user, _id: `${Date.now()}${Math.random().toString(36).slice(2)}` };
+      this.users.push(saved);
+      return saved;
+    }
+    async findByUsername(username) { return this.users.find(u => u.username === username) || null; }
+    async getAll() { return this.users.map(u => ({ ...u, password: undefined })); }
+    async updateByUsername(username, data) {
+      const idx = this.users.findIndex(u => u.username === username);
+      if (idx === -1) { const err = new Error('Recurso não encontrado'); err.httpStatus = 404; throw err; }
+      this.users[idx] = { ...this.users[idx], ...data };
+      return this.users[idx];
+    }
+    async deleteByUsername(username) {
+      const idx = this.users.findIndex(u => u.username === username);
+      if (idx === -1) return false;
+      this.users.splice(idx, 1);
+      return true;
+    }
   }
-  configureRoutes(app);
+
+  function getUserRepoInstance() {
+    if (global.__userRepository__) return global.__userRepository__;
+    if (process.env.NODE_ENV === 'test') {
+      if (!global.__inMemoryUserRepo) global.__inMemoryUserRepo = new InMemoryUserRepository();
+      return global.__inMemoryUserRepo;
+    }
+    return new UserRepositoryImpl();
+  }
+  configureRoutes(app, getUserRepoInstance);
   return app;
 }
 
-export function configureRoutes(app) {
+export function configureRoutes(app, getUserRepoInstance) {
   
 
   
@@ -51,6 +86,31 @@ export function configureRoutes(app) {
     next();
   }, registerHandler);
 
+  /**
+   * @openapi
+   * /self-register:
+   *   post:
+   *     summary: Auto-register a guest user
+   *     tags:
+   *       - Autenticação
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               username:
+   *                 type: string
+   *               password:
+   *                 type: string
+   *               email:
+   *                 type: string
+   *     responses:
+   *       '201':
+   *         description: Usuário criado com sucesso
+   */
+
   
   app.post('/register', async (req, res, next) => {
     console.log('[REGISTER ROUTE] Requisição recebida em /register');
@@ -58,7 +118,7 @@ export function configureRoutes(app) {
     
     if (!disableBootstrap) {
       try {
-        const repo = new UserRepositoryImpl();
+        const repo = getUserRepoInstance && getUserRepoInstance();
         const existingUsers = await repo.getAll();
         console.log('[REGISTER ROUTE] existingUsers length:', existingUsers?.length || 0);
         if (!existingUsers || existingUsers.length === 0) {
@@ -112,9 +172,14 @@ export function configureRoutes(app) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     try {
-      const repo = new UserRepositoryImpl();
-      const users = (await repo.getAll()).map(user => {
-        const { _doc: { password, ...cleanedUser } } = user;
+      const repo = getUserRepoInstance();
+      const usersRaw = await repo.getAll();
+      const users = (usersRaw || []).map(user => {
+        if (user && user._doc) {
+          const { _doc: { password, ...cleanedUser } } = user;
+          return cleanedUser;
+        }
+        const { password, ...cleanedUser } = user || {};
         return cleanedUser;
       });
       res.json(users);

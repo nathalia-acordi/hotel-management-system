@@ -41,7 +41,8 @@ app.use((req, res, next) => {
   next();
 });
 
-setupProxies(app);
+// setupProxies may perform async startup of local test stubs when NODE_ENV==='test'.
+await setupProxies(app);
 
 app.use(express.json());
 
@@ -60,6 +61,24 @@ if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`[GATEWAY] Serviço iniciado na porta ${PORT}`);
   });
+} else if (!process.env.JEST_WORKER_ID) {
+  // Only start a real HTTP listener in the parent/test-runner process (not in
+  // jest worker processes). The test runner (globalSetup) spawns a detached
+  // process to host the gateway; this block will run in that process and start
+  // the listener. Worker processes that import the app for supertest must not
+  // start another listener (that would cause EADDRINUSE).
+  try {
+    const server = app.listen(PORT, () => {
+      console.log(`[GATEWAY] Serviço (test) iniciado na porta ${PORT}`);
+    });
+    try { server.unref(); } catch (e) { /* best-effort */ }
+    global.__gatewayServer = server;
+  } catch (e) {
+    console.warn('[GATEWAY] Falha ao iniciar listener de teste:', e && e.message);
+  }
+} else {
+  // In jest worker processes, do not start a network listener; supertest will
+  // use the `app` directly.
 }
 
 export default app;

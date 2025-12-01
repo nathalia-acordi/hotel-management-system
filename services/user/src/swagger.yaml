@@ -390,7 +390,7 @@ paths:
                   message:
                     type: string
                     example: Credenciais válidas
-      id:
+                  id:
                     type: string
                     example: "691fdd83350610ca7e475617"
                   role:
