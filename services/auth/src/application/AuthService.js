@@ -1,27 +1,15 @@
-
-
-
 export class AuthService {
   constructor({ userReader, tokenService, passwordHasher }) {
-    
-    
-    
     this.userReader = userReader;
     this.tokenService = tokenService;
     this.passwordHasher = passwordHasher;
   }
-
-  
   
   isEmail(identifier) {
     return /.+@.+\..+/.test(identifier);
   }
-
-  
   
   async login(identifier, password) {
-    
-    
     const isEmail = this.isEmail(identifier);
     const validated = await this.userReader.findByEmailOrUsername(identifier, isEmail, password);
 
@@ -31,10 +19,6 @@ export class AuthService {
       throw err;
     }
 
-    // If the user reader returned a passwordHash, validate the provided
-    // password here using the injected passwordHasher. Tests mock the
-    // passwordHasher and the UserReader to provide a passwordHash for this
-    // validation.
     if (validated.passwordHash) {
       const match = await this.passwordHasher.compare(password, validated.passwordHash);
       if (!match) {
@@ -43,8 +27,6 @@ export class AuthService {
         throw err;
       }
     }
-
-    
     
     const roleMap = {
       recepcionista: 'receptionist',
@@ -54,23 +36,15 @@ export class AuthService {
       guest: 'guest'
     };
 
-    
     const normalizedRole = roleMap[validated.role] || validated.role;
-
-    
     
     const claims = {
       sub: validated.id,
       role: normalizedRole,
       username: validated.username
     };
-
-    
     
     const token = this.tokenService.sign(claims, { expiresIn: '1h' });
-
-    
-    
     return {
       token,
       user: {

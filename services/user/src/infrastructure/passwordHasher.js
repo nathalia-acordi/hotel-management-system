@@ -1,11 +1,4 @@
-
-
-
-
-
-
-
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 
 export class BcryptPasswordHasher {
   constructor(rounds = 10) {
