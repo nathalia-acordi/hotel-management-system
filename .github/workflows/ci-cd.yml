@@ -64,7 +64,23 @@ EOF
       - name: Install dependencies
         run: npm ci
       - name: Run tests with coverage (skip integration tests)
-        run: npm run coverage -- --testPathIgnorePatterns="/tests/integration/"
+        run: npm run coverage -- --testPathIgnorePatterns="/tests/integration/" --json --outputFile=jest-output.json
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@134dcf33c0b9454c4b17a936843d7e21dccdc335
+        with:
+          name: coverage-${{ matrix.service }}
+          path: |
+            coverage
+            coverage/lcov.info
+
+      - name: Upload jest JSON output
+        if: always()
+        uses: actions/upload-artifact@134dcf33c0b9454c4b17a936843d7e21dccdc335
+        with:
+          name: jest-output-${{ matrix.service }}
+          path: jest-output.json
 
   build_and_push:
     name: Build and Push Docker images
