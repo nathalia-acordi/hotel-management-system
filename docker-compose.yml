@@ -22,6 +22,21 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq-exporter:
+    image: kbudde/rabbitmq-exporter:latest
+    container_name: rabbitmq-exporter
+    ports:
+      - "9419:9419"
+    environment:
+      # Scrapes the management API using guest:guest credentials in this demo
+      - RABBITMQ_URL=http://guest:guest@rabbitmq:15672
+      - RABBITMQ_API_URL=http://rabbitmq:15672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+
   user:
     build:
       context: ./services/user
@@ -84,7 +99,7 @@ services:
     image: test-reservation
     container_name: reservation-service
     ports:
-      - "3002:3000"
+      - "3006:3000"
     environment:
       NODE_ENV: development
       MONGODB_URI: mongodb://mongodb:27017/reservation_service
@@ -212,7 +227,7 @@ services:
     image: grafana/grafana:9.0.0
     container_name: grafana
     ports:
-      - "3001:3000"
+      - "3002:3000"
     volumes:
       - grafana-storage:/var/lib/grafana
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
